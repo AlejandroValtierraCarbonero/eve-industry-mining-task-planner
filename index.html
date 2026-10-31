@@ -34,7 +34,7 @@
 
       <section class="summary-grid" aria-label="Resumen del grupo de recolección">
         <article class="summary-card"><span>PROYECTOS ACTIVOS</span><strong id="summary-projects">0</strong><small>en el grupo de recolección</small></article>
-        <article class="summary-card"><span>MINERALES PENDIENTES</span><strong id="summary-minerals">0</strong><small>unidades para completar el grupo</small></article>
+        <article class="summary-card"><span>MATERIALES PENDIENTES</span><strong id="summary-minerals">0</strong><small>unidades para completar el grupo</small></article>
         <article class="summary-card summary-progress"><span>PROGRESO DEL GRUPO</span><strong id="summary-progress">0%</strong><div class="progress-track"><span id="summary-progress-bar"></span></div></article>
       </section>
 
@@ -50,8 +50,25 @@
             <div><p class="eyebrow">PRODUCCIÓN</p><h2>Proyectos</h2></div>
             <span class="section-count" id="project-count">0</span>
           </div>
-          <p class="section-copy">Activa los proyectos que quieras reunir en el grupo de recolección actual.</p>
+          <p class="section-copy">Busca en el catálogo oficial SDE de EVE, añade un producto fabricable o introduce sus materiales manualmente.</p>
           <form id="project-form" class="entry-form">
+            <div class="blueprint-catalog">
+              <div class="catalog-heading"><span class="field-label">Catálogo oficial SDE</span><span id="sde-catalog-status" class="catalog-status">Cargando catálogo…</span></div>
+              <label class="sr-only" for="blueprint-search">Buscar producto o blueprint</label>
+              <input id="blueprint-search" type="search" autocomplete="off" aria-autocomplete="list" aria-controls="blueprint-search-results" aria-expanded="false" placeholder="Busca un producto, por ejemplo Drake…" disabled>
+              <div id="blueprint-search-results" class="blueprint-search-results" role="listbox" aria-label="Resultados del catálogo SDE" hidden></div>
+              <p id="blueprint-search-empty" class="blueprint-search-empty" hidden>No se encontraron productos con ese nombre.</p>
+              <article id="blueprint-selection" class="blueprint-selection" hidden>
+                <div class="blueprint-selection-heading"><strong id="selected-blueprint-name"></strong><button id="clear-blueprint" class="text-button" type="button">Quitar</button></div>
+                <p id="selected-blueprint-english" class="blueprint-english"></p>
+                <label class="field-label" for="blueprint-quantity">Unidades que quieres fabricar
+                  <input id="blueprint-quantity" type="number" min="1" step="1" value="1">
+                </label>
+                <p id="blueprint-plan-summary" class="blueprint-plan-summary"></p>
+                <ul id="blueprint-material-preview" class="blueprint-material-preview"></ul>
+                <button id="apply-blueprint" class="secondary-button" type="button">Cargar materiales en el proyecto</button>
+              </article>
+            </div>
             <label class="field-label" for="project-name">Nombre del proyecto</label>
             <input id="project-name" name="name" maxlength="80" placeholder="Ej. 2x Drake" required>
             <div class="form-row">
@@ -62,8 +79,9 @@
               </label>
               <label class="check-field"><input name="active" type="checkbox" checked> Incluir en el grupo</label>
             </div>
-            <div class="materials-heading"><span class="field-label">Materiales requeridos</span><button class="text-button" type="button" id="add-project-material">+ Añadir mineral</button></div>
+            <div class="materials-heading"><span class="field-label">Materiales requeridos</span><button class="text-button" type="button" id="add-project-material">+ Añadir material</button></div>
             <div id="project-material-rows" class="dynamic-rows"></div>
+            <datalist id="material-options"></datalist>
             <button class="primary-button" type="submit">Crear proyecto <span aria-hidden="true">＋</span></button>
           </form>
           <div id="project-list" class="project-list"></div>
@@ -75,9 +93,9 @@
             <div><p class="eyebrow">SEGUIMIENTO</p><h2>Grupo de recolección</h2></div>
             <span class="live-pill"><span class="status-dot"></span> EN VIVO</span>
           </div>
-          <p class="section-copy">Los minerales recolectados se asignan por prioridad alta a baja entre los proyectos activos.</p>
+          <p class="section-copy">Los materiales recolectados se asignan por prioridad alta a baja entre los proyectos activos.</p>
           <form id="collection-form" class="collection-entry">
-            <label class="field-label" for="collected-mineral">Registrar mineral obtenido</label>
+            <label class="field-label" for="collected-mineral">Registrar material obtenido</label>
             <div class="inline-form">
               <select id="collected-mineral" name="mineral"></select>
               <input id="collected-amount" name="amount" type="number" min="1" step="1" placeholder="Cantidad" required>
@@ -86,7 +104,7 @@
           </form>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>MINERAL</th><th>REQUERIDO</th><th>RECOLECTADO</th><th>PENDIENTE</th></tr></thead>
+              <thead><tr><th>MATERIAL</th><th>REQUERIDO</th><th>RECOLECTADO</th><th>PENDIENTE</th></tr></thead>
               <tbody id="collection-table"></tbody>
             </table>
             <div id="empty-collection" class="empty-table">Activa un proyecto con materiales para ver el plan consolidado.</div>

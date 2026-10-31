@@ -17,19 +17,22 @@ El workflow de GitHub Actions publica automáticamente la versión estable desde
 ## Funcionalidad disponible
 
 - Crear proyectos con materiales manuales, prioridad y activación en el grupo de recolección.
+- En el entorno de pruebas, buscar 4.000+ productos fabricables del EVE Online SDE y cargar sus materiales base al proyecto.
 - Agregar necesidades del grupo y calcular el progreso global e individual.
 - Registrar minerales obtenidos, asignarlos por prioridad y mostrar excedentes.
 - Definir perfiles de menas, rendimientos por lote, eficiencia de reprocesamiento, capacidad de carga y volumen por unidad de mineral.
 - Obtener recomendaciones heurísticas para el mineral pendiente más crítico.
 
-Los perfiles de rendimiento deben introducirse según la configuración real del personaje y la estructura. El volumen de minerales pendientes se estima con el volumen por unidad configurado en los ajustes; modifica ese valor si corresponde.
+Los perfiles de rendimiento deben introducirse según la configuración real del personaje y la estructura. Los requisitos del catálogo son los valores base del SDE; todavía no aplican la eficiencia del blueprint ni bonificaciones de estructura. El volumen de materiales del SDE usa sus datos oficiales; los materiales introducidos manualmente usan el volumen por unidad configurado en los ajustes.
 
 ## Límites y siguientes fases
 
 - El planificador actual recomienda la mena de menor volumen para el déficit más crítico. No resuelve todavía la optimización lineal de coproductos.
-- No incluye catálogo SDE, buscador de blueprints ni inicio de sesión/lectura de inventario mediante ESI.
+- La búsqueda del catálogo SDE está disponible solo en el entorno de pruebas; no incluye inicio de sesión ni lectura de inventario mediante ESI.
 - La asignación de materiales recolectados se recalcula por prioridad entre los proyectos activos. Al desactivar proyectos, las cantidades registradas se conservan y pueden aparecer como excedentes.
 
 ## Pruebas
 
-Con Node.js instalado, ejecuta `node --test planner.test.js`.
+Con Node.js y Python instalados, ejecuta `node --test planner.test.js` y `python -m unittest discover -s scripts -p 'test_*.py'`.
+
+El catálogo se genera desde el [SDE JSONL oficial](https://developers.eveonline.com/docs/services/static-data/) en cada publicación de Pages y cada jueves. El archivo comprimido se almacena en la caché de GitHub Actions según el número de build del SDE.

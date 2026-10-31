@@ -82,6 +82,30 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .text-button { color: var(--accent); border: 0; background: transparent; padding: 4px; font-size: 10px; }
 .text-button:hover { text-decoration: underline; }
 .danger-text { color: var(--danger); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.blueprint-catalog { margin: 0 0 17px; padding: 12px; background: #10171d; border: 1px solid #35424c; border-radius: 4px; }
+.catalog-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.catalog-heading .field-label { font-weight: 600; }
+.catalog-status { color: var(--muted); font: 9px "DM Mono", monospace; text-align: right; }
+.blueprint-catalog > input { width: 100%; color: var(--text); background: #11181e; border: 1px solid #35424c; border-radius: 4px; padding: 10px 11px; outline: none; font-size: 11px; }
+.blueprint-search-results { max-height: 240px; overflow-y: auto; margin-top: 6px; border: 1px solid var(--border); border-radius: 4px; }
+.blueprint-search-results[hidden], .blueprint-selection[hidden] { display: none; }
+.blueprint-search-empty { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.blueprint-search-empty[hidden] { display: none; }
+.blueprint-result { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; width: 100%; text-align: left; padding: 9px 10px; border: 0; border-bottom: 1px solid #26323b; background: #151d24; color: var(--text); }
+.blueprint-result:last-child { border-bottom: 0; }
+.blueprint-result:hover, .blueprint-result:focus-visible { background: #20322f; outline: none; }
+.blueprint-result strong { font: 500 11px "Space Grotesk", sans-serif; }
+.blueprint-result span, .blueprint-english { color: var(--muted); font-size: 9px; }
+.blueprint-selection { margin-top: 10px; padding: 12px; border: 1px solid #36554f; border-radius: 4px; background: #15241f; }
+.blueprint-selection-heading { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.blueprint-selection-heading strong { color: var(--accent); font: 500 13px "Space Grotesk", sans-serif; }
+.blueprint-english { margin: 3px 0 10px; }
+.blueprint-plan-summary { margin: 9px 0; color: #b7c5c6; font-size: 10px; line-height: 1.6; }
+.blueprint-material-preview { list-style: none; padding: 0; margin: 0 0 12px; max-height: 170px; overflow-y: auto; }
+.blueprint-material-preview li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid #2a3935; color: #d3dddb; font-size: 10px; }
+.blueprint-material-preview li span { color: var(--gold); font: 10px "DM Mono", monospace; }
+.blueprint-selection .secondary-button { width: 100%; font-size: 10px; }
 .project-list { display: grid; gap: 10px; margin-top: 15px; }
 .project-card { background: #151c23; border: 1px solid #2c3943; border-radius: 5px; padding: 13px; }
 .project-card.inactive { opacity: .58; }
