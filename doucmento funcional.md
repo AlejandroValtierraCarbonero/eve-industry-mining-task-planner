@@ -75,7 +75,8 @@ Configuración de variables del personaje: eficiencia de refinado (%) basada en 
 Muestra la lista consolidada de minería:
 
 - Volumen total a extraer expresado en m3 y en número de cargamentos (según la capacidad del Hold de la nave minera, ej. Orca/Rorqual/Barge).
-- Lista detallada: "Mina X unidades de Mena A en Sistema Y para obtener la cantidad de Mineral B y C".
+- Cantidad de unidades de mena sin procesar necesarias, calculada a partir del tamaño de lote y el rendimiento oficial de reprocesamiento para cubrir el mineral pendiente más crítico.
+- Indicar el rendimiento mineral estimado, el volumen y los viajes de carga; la recomendación es orientativa y no optimiza todos los coproductos a la vez.
 
 ### Módulo D: Panel de control de recolección (Tracking & Progress Bar)
 

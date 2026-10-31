@@ -127,7 +127,7 @@
           <div><p class="eyebrow">PLANIFICACIÓN DE MINERÍA</p><h2>Recomendación de menas</h2></div>
           <button id="add-ore-toggle" class="secondary-button" type="button">Configurar una mena <span aria-hidden="true">＋</span></button>
         </div>
-        <p class="section-copy">La recomendación usa las composiciones y los volúmenes por lote del catálogo oficial SDE, ajustados por tu eficiencia de reprocesamiento. Prioriza el mineral pendiente más crítico y estima qué mena requiere menos volumen; no considera dónde está disponible ni reemplaza un optimizador completo.</p>
+        <p class="section-copy">La recomendación indica las unidades de mena sin procesar necesarias para cubrir el déficit de mineral más crítico, usando composiciones, tamaño de lote y volumen del catálogo SDE, ajustados por tu eficiencia de reprocesamiento. Es una estimación; no considera dónde está disponible la mena ni optimiza todos los coproductos a la vez.</p>
         <form id="ore-form" class="entry-form ore-form" hidden>
           <div class="form-row">
             <label class="field-label">Nombre de la mena<input name="name" maxlength="80" placeholder="Ej. Veldspar" required></label>
@@ -137,6 +137,7 @@
             <label class="field-label">Volumen por lote (m³)<input name="volume" type="number" min="0.001" step="any" placeholder="Ej. 10" required></label>
             <label class="field-label">Salida por lote<textarea name="yields" rows="2" placeholder="Tritanium: 1000&#10;Pyerite: 25" required></textarea><small>Una línea por mineral: Nombre: cantidad</small></label>
           </div>
+          <label class="field-label">Unidades de mena sin procesar por lote<input name="portionSize" type="number" min="1" step="1" value="1" required><small>Para perfiles SDE, el catálogo proporciona este valor automáticamente.</small></label>
           <div class="form-actions"><button class="primary-button" type="submit">Guardar perfil de mena</button><button id="cancel-ore" class="text-button" type="button">Cancelar</button></div>
         </form>
         <div id="ore-recommendation" class="recommendation-list"></div>

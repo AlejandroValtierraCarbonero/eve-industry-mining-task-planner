@@ -478,6 +478,7 @@
     const form = event.currentTarget;
     const name = form.elements.name.value.trim();
     const volume = Number(form.elements.volume.value);
+    const portionSize = Number(form.elements.portionSize.value);
     const yields = {};
     for (const line of form.elements.yields.value.split(/\r?\n/)) {
       if (!line.trim()) continue;
@@ -494,8 +495,9 @@
       }
       yields[mineral] = (yields[mineral] || 0) + amount;
     }
-    if (!name || !Number.isFinite(volume) || volume <= 0 || !Object.keys(yields).length) {
-      showNotice("Completa el nombre, un volumen válido y al menos un rendimiento.", true);
+    if (!name || !Number.isFinite(volume) || volume <= 0 ||
+      !Number.isInteger(portionSize) || portionSize <= 0 || !Object.keys(yields).length) {
+      showNotice("Completa el nombre, el volumen, las unidades por lote y al menos un rendimiento válidos.", true);
       return;
     }
     state.ores.push({
@@ -503,6 +505,7 @@
       name,
       system: form.elements.system.value.trim(),
       volume,
+      portionSize,
       yields
     });
     form.reset();
@@ -651,7 +654,8 @@
       const trips = Math.ceil(ore.volume / state.settings.holdCapacity);
       return `<article class="recommendation-card"><strong>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</strong><small class="ore-source">${escapeHtml(ore.source)}</small>
         <p>Prioridad: <span>${escapeHtml(ore.mineral)}</span> · Déficit ${formatNumber(ore.deficit)}</p>
-        <p>${formatNumber(ore.batches)} lotes · ~${formatNumber(ore.volume)} m³ · ${trips} ${trips === 1 ? "viaje" : "viajes"}</p>
+        <p>Mena sin procesar: ${formatNumber(ore.rawUnits)} unidades · ${formatNumber(ore.batches)} ${ore.batches === 1 ? "lote de reprocesamiento" : "lotes de reprocesamiento"}</p>
+        <p>Volumen estimado: ~${formatNumber(ore.volume)} m³ · ${trips} ${trips === 1 ? "viaje" : "viajes"}</p>
         <p>Rendimiento estimado: ${formatNumber(ore.estimatedOutput)} ${escapeHtml(ore.mineral)}</p></article>`;
     }).join("");
     const emptyMessage = $("#empty-ores");
@@ -662,7 +666,7 @@
         ? "Configura una eficiencia de reprocesamiento mayor que 0 % para estimar rendimientos."
         : "No hay datos de menas que produzcan el mineral prioritario.";
     ids.oreList.innerHTML = state.ores.map((ore) =>
-      `<div class="ore-chip"><span>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</span><small>${formatNumber(ore.volume)} m³/lote</small><button type="button" data-id="${escapeHtml(ore.id)}" aria-label="Eliminar perfil de ${escapeHtml(ore.name)}">×</button></div>`
+      `<div class="ore-chip"><span>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</span><small>${formatNumber(ore.portionSize || 1)} unidades · ${formatNumber(ore.volume)} m³/lote</small><button type="button" data-id="${escapeHtml(ore.id)}" aria-label="Eliminar perfil de ${escapeHtml(ore.name)}">×</button></div>`
     ).join("");
     ids.oreList.querySelectorAll("button[data-id]").forEach((button) => {
       button.addEventListener("click", () => {

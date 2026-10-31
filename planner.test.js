@@ -41,6 +41,7 @@ test("recomienda perfiles por volumen según eficiencia y déficit crítico", ()
   );
   assert.equal(recommendations[0].name, "B");
   assert.equal(recommendations[0].batches, 2);
+  assert.equal(recommendations[0].rawUnits, 2);
   assert.equal(recommendations[0].volume, 10);
 });
 
@@ -57,7 +58,16 @@ test("recomienda menas del SDE usando el volumen total de su lote", () => {
   assert.equal(recommendations.length, 1);
   assert.equal(recommendations[0].batches, 2);
   assert.equal(recommendations[0].batchVolume, 10);
+  assert.equal(recommendations[0].rawUnits, 200);
   assert.equal(recommendations[0].volume, 20);
+  const reducedEfficiency = planner.recommendOres(
+    { Tritanium: 401 },
+    {},
+    [{ name: "Veldspar SDE", portionSize: 100, batchVolume: 10, yields: { Tritanium: 400 } }],
+    50
+  );
+  assert.equal(reducedEfficiency[0].batches, 3);
+  assert.equal(reducedEfficiency[0].rawUnits, 300);
 });
 
 test("busca blueprints sin distinguir mayúsculas ni acentos y limita resultados", () => {
