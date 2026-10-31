@@ -10,6 +10,46 @@
     "Nocxium", "Zydrine", "Megacyte", "Morphite"
   ];
 
+  function normalizeSearchText(value) {
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+  }
+
+  function searchBlueprints(catalog, query, limit) {
+    const search = normalizeSearchText(query).trim();
+    if (!search || !Array.isArray(catalog)) return [];
+    const maxResults = Number.isInteger(limit) && limit > 0 ? limit : 12;
+    return catalog.map((blueprint) => {
+      const names = [blueprint.name, blueprint.englishName, blueprint.blueprintName]
+        .map(normalizeSearchText);
+      const match = names.find((name) => name.includes(search));
+      if (match === undefined) return null;
+      return { blueprint, rank: match.startsWith(search) ? 0 : 1 };
+    }).filter(Boolean)
+      .sort((a, b) => a.rank - b.rank || a.blueprint.name.localeCompare(b.blueprint.name))
+      .slice(0, maxResults)
+      .map((item) => item.blueprint);
+  }
+
+  function getBlueprintPlan(blueprint, requestedQuantity) {
+    const quantity = Math.ceil(Number(requestedQuantity));
+    const outputQuantity = Number(blueprint?.outputQuantity);
+    if (!Number.isFinite(quantity) || quantity <= 0 ||
+      !Number.isFinite(outputQuantity) || outputQuantity <= 0 ||
+      !Array.isArray(blueprint?.materials) || !blueprint.materials.length) {
+      throw new RangeError("Blueprint and requested product quantity must be valid.");
+    }
+    const runs = Math.ceil(quantity / outputQuantity);
+    return {
+      runs,
+      requestedQuantity: quantity,
+      producedQuantity: runs * outputQuantity,
+      materials: blueprint.materials.map((material) => ({
+        ...material,
+        requiredQuantity: Number(material.quantity) * runs
+      }))
+    };
+  }
+
   function getRequirements(projects) {
     const totals = {};
     for (const project of projects.filter((item) => item.active)) {
@@ -98,6 +138,8 @@
 
   return {
     MINERALS,
+    searchBlueprints,
+    getBlueprintPlan,
     getRequirements,
     allocateMinerals,
     getProgress,

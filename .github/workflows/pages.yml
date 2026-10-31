@@ -6,6 +6,8 @@ on:
       - main
       - master
       - testing
+  schedule:
+    - cron: "0 6 * * 4"
   workflow_dispatch:
 
 permissions:
@@ -31,11 +33,34 @@ jobs:
         with:
           ref: testing
           path: testing
+      - name: Read latest SDE build number
+        id: sde-version
+        run: |
+          mkdir -p .cache/sde
+          curl --fail --silent --show-error https://developers.eveonline.com/static-data/tranquility/latest.jsonl -o .cache/sde/latest.jsonl
+          BUILD_NUMBER=$(python -c 'import json; rows=(json.loads(line) for line in open(".cache/sde/latest.jsonl", encoding="utf-8")); print(next(row["buildNumber"] for row in rows if row.get("_key") == "sde"))')
+          echo "build=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+      - name: Restore official SDE archive cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/sde/sde.zip
+          key: eve-sde-jsonl-${{ steps.sde-version.outputs.build }}
+      - name: Download official SDE archive
+        run: |
+          if [ ! -s .cache/sde/sde.zip ]; then
+            curl --fail --location --silent --show-error \
+              "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-${{ steps.sde-version.outputs.build }}-jsonl.zip" \
+              -o .cache/sde/sde.zip
+          fi
       - name: Prepare static site
         run: |
           mkdir -p dist/testing
           cp production/index.html production/styles.css production/app.js production/planner.js dist/
           cp testing/index.html testing/styles.css testing/app.js testing/planner.js dist/testing/
+          python production/scripts/build_sde_catalog.py \
+            --archive .cache/sde/sde.zip \
+            --output dist/testing/sde-blueprints.json \
+            --build-number "${{ steps.sde-version.outputs.build }}"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
