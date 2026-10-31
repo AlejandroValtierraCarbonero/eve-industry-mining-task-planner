@@ -18,7 +18,7 @@ El workflow de GitHub Actions publica automáticamente la versión estable desde
 
 - Crear proyectos con materiales manuales, prioridad y activación en el grupo de recolección.
 - En el entorno de pruebas, buscar 4.000+ productos fabricables del EVE Online SDE y cargar sus materiales base al proyecto.
-- Configurar la eficiencia de materiales (ME) del blueprint entre 0 y 10 %; el requisito se recalcula por lote total con redondeo hacia arriba.
+- Configurar la eficiencia de materiales (ME) del blueprint entre 0 y 10 %; los blueprints del proyecto se recalculan al cambiarla, con redondeo hacia arriba por material.
 - Agregar necesidades del grupo y calcular el progreso global e individual.
 - Registrar materiales obtenidos, asignarlos por prioridad y mostrar excedentes.
 - Definir perfiles de menas, rendimientos por lote, eficiencia de reprocesamiento, capacidad de carga y volumen para materiales manuales.

@@ -23,6 +23,7 @@
   let noticeTimer;
   let blueprintCatalog = [];
   let selectedBlueprint = null;
+  let projectBlueprintDraft = null;
   let searchTimer;
 
   const $ = (selector) => document.querySelector(selector);
@@ -105,6 +106,10 @@
     materialInput.addEventListener("input", () => {
       materialInput.dataset.volume = "";
       materialInput.dataset.englishName = "";
+      projectBlueprintDraft = null;
+    });
+    row.querySelector('[aria-label="Cantidad requerida"]').addEventListener("input", () => {
+      projectBlueprintDraft = null;
     });
     row.querySelector(".remove-row").addEventListener("click", () => {
       if (container.children.length > 1) row.remove();
@@ -154,6 +159,8 @@
         return;
       }
       state.settings.materialEfficiency = value;
+      recalculateBlueprintProjects();
+      refreshBlueprintDraftMaterials();
       saveState();
       render();
       renderBlueprintSelection();
@@ -255,6 +262,16 @@
         state.settings.materialEfficiency
       );
       $("#project-name").value = `${formatNumber(plan.requestedQuantity)} × ${selectedBlueprint.name}`;
+      projectBlueprintDraft = {
+        outputQuantity: selectedBlueprint.outputQuantity,
+        requestedQuantity: plan.requestedQuantity,
+        materials: plan.materials.map((material) => ({
+          name: material.name,
+          englishName: material.englishName,
+          volume: material.volume,
+          baseRequiredQuantity: material.baseRequiredQuantity
+        }))
+      };
       ids.projectRows.replaceChildren();
       for (const material of plan.materials) {
         addMaterialRow(ids.projectRows, material.name);
@@ -271,6 +288,33 @@
     }
   }
 
+  function recalculateBlueprintProjects() {
+    for (const project of state.projects) {
+      if (!Array.isArray(project.blueprintBaseMaterials)) continue;
+      project.requirements = {};
+      for (const material of project.blueprintBaseMaterials) {
+        const quantity = Math.ceil(
+          material.baseRequiredQuantity * (1 - state.settings.materialEfficiency / 100)
+        );
+        project.requirements[material.name] =
+          (project.requirements[material.name] || 0) + quantity;
+      }
+    }
+  }
+
+  function refreshBlueprintDraftMaterials() {
+    if (!projectBlueprintDraft) return;
+    for (const [index, material] of projectBlueprintDraft.materials.entries()) {
+      const quantityInput = ids.projectRows.children[index]
+        ?.querySelector('[aria-label="Cantidad requerida"]');
+      if (quantityInput) {
+        quantityInput.value = Math.ceil(
+          material.baseRequiredQuantity * (1 - state.settings.materialEfficiency / 100)
+        );
+      }
+    }
+  }
+
   function initializeForms() {
     addMaterialRow(ids.projectRows, "Tritanium");
     $("#material-options").innerHTML = MINERALS.map((mineral) =>
@@ -278,7 +322,10 @@
     ).join("");
     initializeBlueprintCatalog();
 
-    $("#add-project-material").addEventListener("click", () => addMaterialRow(ids.projectRows));
+    $("#add-project-material").addEventListener("click", () => {
+      projectBlueprintDraft = null;
+      addMaterialRow(ids.projectRows);
+    });
     $("#project-form").addEventListener("submit", (event) => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -311,6 +358,7 @@
         requirements,
         materialVolumes,
         materialEnglishNames,
+        blueprintBaseMaterials: projectBlueprintDraft?.materials,
         createdAt: Date.now()
       });
       form.reset();
@@ -318,6 +366,7 @@
       form.elements.active.checked = true;
       ids.projectRows.replaceChildren();
       addMaterialRow(ids.projectRows, "Tritanium");
+      projectBlueprintDraft = null;
       selectedBlueprint = null;
       $("#blueprint-selection").hidden = true;
       $("#blueprint-search-results").hidden = true;
