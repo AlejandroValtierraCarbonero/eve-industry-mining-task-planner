@@ -12,6 +12,7 @@
     projects: [],
     ores: [],
     collected: {},
+    minedOres: {},
     settings: {
       efficiency: 100,
       holdCapacity: 100000,
@@ -33,7 +34,8 @@
     collectionTable: $("#collection-table"),
     progressList: $("#progress-list"),
     oreList: $("#ore-list"),
-    recommendation: $("#ore-recommendation")
+    recommendation: $("#ore-recommendation"),
+    recommendedOreSelect: $("#recommended-ore")
   };
 
   function escapeHtml(value) {
@@ -72,6 +74,7 @@
         projects,
         ores: Array.isArray(parsed.ores) ? parsed.ores : [],
         collected: parsed.collected && typeof parsed.collected === "object" ? parsed.collected : {},
+        minedOres: parsed.minedOres && typeof parsed.minedOres === "object" ? parsed.minedOres : {},
         settings: {
           efficiency: clamp(Number.isFinite(efficiency) ? efficiency : 100, 0, 100),
           holdCapacity: Number.isFinite(holdCapacity) && holdCapacity > 0 ? holdCapacity : 100000,
@@ -416,6 +419,22 @@
       showNotice(`${formatNumber(amount)} unidades de ${mineral} registradas.`);
     });
 
+    $("#ore-collection-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const oreKey = form.elements.ore.value;
+      const amount = Number(form.elements.amount.value);
+      if (!oreKey || !Number.isFinite(amount) || amount <= 0) {
+        showNotice("Selecciona una mena e introduce una cantidad mayor que cero.", true);
+        return;
+      }
+      state.minedOres[oreKey] = (Number(state.minedOres[oreKey]) || 0) + amount;
+      form.elements.amount.value = "";
+      saveState();
+      render();
+      showNotice(`${formatNumber(amount)} unidades de mena registradas.`);
+    });
+
     $("#clear-collection").addEventListener("click", () => {
       if (!Object.keys(state.collected).length) {
         showNotice("El registro de recolección ya está vacío.");
@@ -649,18 +668,21 @@
     ];
     const suggestions = window.EvePlanner.recommendOres(
       mineralRequirements, mineralCollected, oreCatalog, state.settings.efficiency
-    );
-    ids.recommendation.innerHTML = suggestions.slice(0, 3).map((ore) => {
-      const trips = Math.ceil(ore.volume / state.settings.holdCapacity);
-      return `<article class="recommendation-card"><strong>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</strong><small class="ore-source">${escapeHtml(ore.source)}</small>
-        <p>Prioridad: <span>${escapeHtml(ore.mineral)}</span> · Déficit ${formatNumber(ore.deficit)}</p>
-        <p>Mena sin procesar: ${formatNumber(ore.rawUnits)} unidades · ${formatNumber(ore.batches)} ${ore.batches === 1 ? "lote de reprocesamiento" : "lotes de reprocesamiento"}</p>
-        <p>Volumen estimado: ~${formatNumber(ore.volume)} m³ · ${trips} ${trips === 1 ? "viaje" : "viajes"}</p>
-        <p>Rendimiento estimado: ${formatNumber(ore.estimatedOutput)} ${escapeHtml(ore.mineral)}</p></article>`;
-    }).join("");
-    const emptyMessage = $("#empty-ores");
-    emptyMessage.hidden = suggestions.length > 0;
-    emptyMessage.querySelector("p").textContent = !Object.keys(mineralRequirements).length
+    ).slice(0, 3).map((ore) => ({
+      ...ore,
+      trackingKey: ore.typeId ? `sde:${ore.typeId}` : `custom:${ore.id}`,
+      mined: Number(state.minedOres[ore.typeId ? `sde:${ore.typeId}` : `custom:${ore.id}`]) || 0
+    }));
+    ids.recommendedOreSelect.innerHTML = suggestions.map((ore) =>
+      `<option value="${escapeHtml(ore.trackingKey)}">${escapeHtml(ore.name)} · ${escapeHtml(ore.source)}</option>`
+    ).join("");
+    ids.recommendedOreSelect.disabled = suggestions.length === 0;
+    ids.recommendation.innerHTML = suggestions.map((ore) =>
+      `<tr><td>${escapeHtml(ore.name)}<small class="ore-source">${escapeHtml(ore.source)} · ${escapeHtml(ore.mineral)} · ${formatNumber(ore.batches)} ${ore.batches === 1 ? "lote" : "lotes"} · ${formatNumber(ore.volume)} m³</small></td><td>${formatNumber(ore.rawUnits)}</td><td>${formatNumber(ore.mined)}</td><td>${formatNumber(Math.max(0, ore.rawUnits - ore.mined))}</td></tr>`
+    ).join("");
+    const emptyOreTable = $("#empty-ore-recommendation");
+    emptyOreTable.hidden = suggestions.length > 0;
+    emptyOreTable.textContent = !Object.keys(mineralRequirements).length
       ? "Activa un proyecto con minerales pendientes para generar recomendaciones."
       : !state.settings.efficiency
         ? "Configura una eficiencia de reprocesamiento mayor que 0 % para estimar rendimientos."

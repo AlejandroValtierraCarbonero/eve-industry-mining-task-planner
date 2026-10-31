@@ -127,7 +127,7 @@
           <div><p class="eyebrow">PLANIFICACIÓN DE MINERÍA</p><h2>Recomendación de menas</h2></div>
           <button id="add-ore-toggle" class="secondary-button" type="button">Configurar una mena <span aria-hidden="true">＋</span></button>
         </div>
-        <p class="section-copy">La recomendación indica las unidades de mena sin procesar necesarias para cubrir el déficit de mineral más crítico, usando composiciones, tamaño de lote y volumen del catálogo SDE, ajustados por tu eficiencia de reprocesamiento. Es una estimación; no considera dónde está disponible la mena ni optimiza todos los coproductos a la vez.</p>
+        <p class="section-copy">La tabla sigue las unidades de mena sin procesar minadas, igual que el seguimiento de materiales. Cada fila es una alternativa para cubrir el déficit de mineral más crítico; no sumes las filas entre sí. Las cantidades usan el catálogo SDE y tu eficiencia de reprocesamiento.</p>
         <form id="ore-form" class="entry-form ore-form" hidden>
           <div class="form-row">
             <label class="field-label">Nombre de la mena<input name="name" maxlength="80" placeholder="Ej. Veldspar" required></label>
@@ -140,8 +140,21 @@
           <label class="field-label">Unidades de mena sin procesar por lote<input name="portionSize" type="number" min="1" step="1" value="1" required><small>Para perfiles SDE, el catálogo proporciona este valor automáticamente.</small></label>
           <div class="form-actions"><button class="primary-button" type="submit">Guardar perfil de mena</button><button id="cancel-ore" class="text-button" type="button">Cancelar</button></div>
         </form>
-        <div id="ore-recommendation" class="recommendation-list"></div>
-        <div id="empty-ores" class="empty-state compact"><p>Activa un proyecto con minerales pendientes para generar recomendaciones.</p></div>
+        <form id="ore-collection-form" class="collection-entry">
+          <label class="field-label" for="recommended-ore">Registrar mena sin procesar minada</label>
+          <div class="inline-form">
+            <select id="recommended-ore" name="ore" required disabled></select>
+            <input name="amount" type="number" min="1" step="1" placeholder="Unidades minadas" required>
+            <button class="primary-button" type="submit">Registrar</button>
+          </div>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>MENA</th><th>REQUERIDA</th><th>MINADA</th><th>PENDIENTE</th></tr></thead>
+            <tbody id="ore-recommendation"></tbody>
+          </table>
+          <div id="empty-ore-recommendation" class="empty-table">Activa un proyecto con minerales pendientes para calcular las menas necesarias.</div>
+        </div>
         <div id="ore-list" class="ore-list"></div>
       </section>
 
