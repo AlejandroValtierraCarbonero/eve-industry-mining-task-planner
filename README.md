@@ -10,7 +10,9 @@ Abre `index.html` en un navegador moderno. Los datos se guardan en el almacenami
 
 **Aplicación publicada:** https://alejandrovaltierracarbonero.github.io/eve-industry-mining-task-planner/
 
-El workflow de GitHub Actions publica automáticamente la aplicación al hacer `push` a `main` o `master`, y también permite lanzarlo manualmente desde la pestaña **Actions**. La URL pública aparece en el despliegue completado y en el entorno `github-pages`.
+**Entorno de pruebas:** https://alejandrovaltierracarbonero.github.io/eve-industry-mining-task-planner/testing/
+
+El workflow de GitHub Actions publica automáticamente la versión estable desde `main` y la versión de pruebas desde `testing`. Para probar cambios sin alterar producción, sube los cambios a la rama `testing`; al aprobarlos, intégralos en `main`. Cada publicación reconstruye las dos versiones. El entorno de pruebas tiene un aviso visible y almacenamiento local independiente. También puedes iniciar la publicación manualmente desde **Actions**.
 
 ## Funcionalidad disponible
 

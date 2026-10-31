@@ -29,6 +29,10 @@ button { cursor: pointer; }
 .brand small { margin-top: 4px; color: var(--muted); font: 9px "DM Mono", monospace; }
 .topbar-status { color: var(--muted); font-size: 11px; }
 .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 9px #60d9c088; margin-right: 7px; }
+.environment-banner { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 10px 16px; background: #3a2d18; border-bottom: 1px solid #806532; color: #f0d7a4; font-size: 11px; text-align: center; }
+.environment-banner[hidden] { display: none; }
+.environment-banner strong { font: 500 10px "DM Mono", monospace; letter-spacing: .1em; }
+.environment-banner a { color: #fff1cf; }
 .page-shell { max-width: 1200px; margin: 0 auto; padding: 58px 24px 36px; }
 .intro { max-width: 700px; margin-bottom: 36px; }
 .eyebrow { color: var(--accent); font: 500 10px "DM Mono", monospace; letter-spacing: .16em; margin: 0 0 10px; }

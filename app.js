@@ -1,7 +1,10 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "eve-industry-planner-v1";
+  const isTestingEnvironment = window.location.pathname.split("/").includes("testing");
+  const STORAGE_KEY = isTestingEnvironment
+    ? "eve-industry-planner-testing-v1"
+    : "eve-industry-planner-v1";
   const { MINERALS } = window.EvePlanner;
   const defaultState = () => ({
     projects: [],
@@ -351,6 +354,7 @@
   }
 
   state = loadState();
+  if (isTestingEnvironment) $("#environment-banner").hidden = false;
   initializeForms();
   render();
 })();
