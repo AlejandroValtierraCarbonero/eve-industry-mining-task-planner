@@ -76,7 +76,7 @@ Muestra la lista consolidada de minería:
 
 - Volumen total a extraer expresado en m3 y en número de cargamentos (según la capacidad del Hold de la nave minera, ej. Orca/Rorqual/Barge).
 - Cantidad de unidades de mena sin procesar necesarias, calculada a partir del tamaño de lote y el rendimiento oficial de reprocesamiento para cubrir el mineral pendiente más crítico.
-- Catálogo completo de menas con filtro por seguridad y selección persistente de las menas disponibles.
+- Catálogo de menas con filtro por seguridad y selección persistente; solo se muestran como seleccionables las menas que producen minerales requeridos por los proyectos activos.
 - Mostrar por separado el requisito individual de cada mena seleccionada, sin sumar las alternativas.
 - Al registrar mena cruda minada, descontar sus rendimientos estimados y coproductos de los déficits pendientes, actualizando las alternativas seleccionadas.
 - Mantener separado el registro de mena y el de minerales reprocesados. Al terminar el reprocesado, el usuario registra los minerales reales en el módulo de recolección y finaliza el ciclo de mena para evitar duplicar rendimientos estimados.

@@ -70,6 +70,20 @@ test("recomienda menas del SDE usando el volumen total de su lote", () => {
   assert.equal(reducedEfficiency[0].rawUnits, 300);
 });
 
+test("filtra las menas por minerales requeridos por los proyectos", () => {
+  const ores = [
+    { name: "Veldspar", yields: { Tritanium: 400 } },
+    { name: "Scordite", yields: { Tritanium: 150, Pyerite: 90 } },
+    { name: "Mercoxit", yields: { Morphite: 1 } },
+    { name: "Invalid ore", yields: { Tritanium: 0 } }
+  ];
+  assert.deepEqual(
+    planner.filterOresByMinerals(ores, ["Tritanium", "Pyerite"]),
+    ores.slice(0, 2)
+  );
+  assert.deepEqual(planner.filterOresByMinerals(ores, []), []);
+});
+
 test("recalcula alternativas seleccionadas con los coproductos de mena ya minada", () => {
   const ores = [
     {

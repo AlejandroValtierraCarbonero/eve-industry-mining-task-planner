@@ -166,6 +166,13 @@
     }).filter(Boolean).sort((a, b) => a.volume - b.volume);
   }
 
+  function filterOresByMinerals(ores, minerals) {
+    const requiredMinerals = new Set(Array.isArray(minerals) ? minerals : []);
+    return ores.filter((ore) => Object.entries(ore.yields || {}).some(
+      ([mineral, amount]) => requiredMinerals.has(mineral) && Number(amount) > 0
+    ));
+  }
+
   function planOreCollection(requirements, collected, ores, selectedOreKeys, minedOres, efficiency) {
     const efficiencyRate = Math.max(0, Math.min(100, Number(efficiency) || 0)) / 100;
     if (!efficiencyRate) return [];
@@ -248,6 +255,7 @@
     getGroupProgress,
     getOverflow,
     recommendOres,
+    filterOresByMinerals,
     planOreCollection
   };
 });

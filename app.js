@@ -497,13 +497,13 @@
       renderOres();
     });
     $("#select-visible-ores").addEventListener("click", () => {
-      const visibleKeys = getVisibleOres(getOreCatalog()).map((ore) => ore.key);
+      const visibleKeys = getVisibleOres(getCompatibleOreCatalog()).map((ore) => ore.key);
       state.selectedOres = [...new Set([...state.selectedOres, ...visibleKeys])];
       saveState();
       renderOres();
     });
     $("#clear-selected-ores").addEventListener("click", () => {
-      const visibleKeys = new Set(getVisibleOres(getOreCatalog()).map((ore) => ore.key));
+      const visibleKeys = new Set(getVisibleOres(getCompatibleOreCatalog()).map((ore) => ore.key));
       state.selectedOres = state.selectedOres.filter((key) => !visibleKeys.has(key));
       saveState();
       renderOres();
@@ -714,18 +714,10 @@
   }
 
   function renderOres() {
-    const mineralRequirements = {};
+    const mineralRequirements = getProjectMineralRequirements();
     const mineralCollected = {};
     const canonicalMineral = (material) =>
       MATERIAL_ENGLISH_NAME_BY_NAME.get(material) || material;
-    for (const project of state.projects.filter((item) => item.active)) {
-      for (const [material, amount] of Object.entries(project.requirements || {})) {
-        const mineral = project.materialEnglishNames?.[material] || canonicalMineral(material);
-        if (MINERALS.includes(mineral)) {
-          mineralRequirements[mineral] = (mineralRequirements[mineral] || 0) + amount;
-        }
-      }
-    }
     const orePlanBaseline = state.oreMiningMineralBaseline || state.collected;
     for (const [material, amount] of Object.entries(orePlanBaseline)) {
       const mineral = canonicalMineral(material);
@@ -733,7 +725,9 @@
         mineralCollected[mineral] = (mineralCollected[mineral] || 0) + amount;
       }
     }
-    const oreCatalog = getOreCatalog();
+    const oreCatalog = window.EvePlanner.filterOresByMinerals(
+      getOreCatalog(), Object.keys(mineralRequirements)
+    );
     const selectedKeys = new Set(state.selectedOres);
     const selectedOres = oreCatalog.filter((ore) =>
       selectedKeys.has(ore.key) || Number(state.minedOres[ore.key]) > 0
@@ -760,7 +754,9 @@
       ? "Activa un proyecto con minerales pendientes para calcular las cantidades de mena."
       : !state.settings.efficiency
         ? "Configura una eficiencia de reprocesamiento mayor que 0 % para estimar las cantidades de mena."
-        : state.selectedOres.length || Object.keys(state.minedOres).length
+        : !oreCatalog.length
+          ? "El catálogo no contiene menas que produzcan minerales de los proyectos activos."
+          : selectedOres.length
           ? "No hay menas seleccionadas con cantidades registradas."
           : "Selecciona en el catálogo las menas que tienes disponibles.";
     const minedCount = Object.values(state.minedOres).filter((amount) => Number(amount) > 0).length;
@@ -804,6 +800,27 @@
     ];
   }
 
+  function getProjectMineralRequirements() {
+    const requirements = {};
+    const canonicalMineral = (material) =>
+      MATERIAL_ENGLISH_NAME_BY_NAME.get(material) || material;
+    for (const project of state.projects.filter((item) => item.active)) {
+      for (const [material, amount] of Object.entries(project.requirements || {})) {
+        const mineral = project.materialEnglishNames?.[material] || canonicalMineral(material);
+        if (MINERALS.includes(mineral)) {
+          requirements[mineral] = (requirements[mineral] || 0) + amount;
+        }
+      }
+    }
+    return requirements;
+  }
+
+  function getCompatibleOreCatalog() {
+    return window.EvePlanner.filterOresByMinerals(
+      getOreCatalog(), Object.keys(getProjectMineralRequirements())
+    );
+  }
+
   function getVisibleOres(oreCatalog) {
     const zone = $("#ore-security-filter").value;
     const query = normalizeOreSearch($("#ore-search").value).trim();
@@ -819,8 +836,9 @@
   function renderOreCatalog(oreCatalog) {
     const visibleOres = getVisibleOres(oreCatalog);
     const selectedKeys = new Set(state.selectedOres);
+    const compatibleSelectedCount = oreCatalog.filter((ore) => selectedKeys.has(ore.key)).length;
     $("#ore-catalog-count").textContent =
-      `${formatNumber(visibleOres.length)} visibles · ${formatNumber(state.selectedOres.length)} seleccionadas`;
+      `${formatNumber(visibleOres.length)} visibles · ${formatNumber(compatibleSelectedCount)} seleccionadas`;
     ids.oreCatalogList.innerHTML = visibleOres.map((ore) => {
       const checked = selectedKeys.has(ore.key);
       const zones = ore.securityZones.map((zone) => ({
@@ -836,6 +854,12 @@
       </label>`;
     }).join("");
     $("#empty-ore-catalog").hidden = visibleOres.length > 0;
+    const projectMinerals = Object.keys(getProjectMineralRequirements());
+    $("#empty-ore-catalog").textContent = !projectMinerals.length
+      ? "Activa un proyecto con minerales para mostrar menas compatibles."
+      : !oreCatalog.length
+        ? "No hay menas en el catálogo que produzcan los minerales de los proyectos activos."
+        : "No hay menas que coincidan con la búsqueda y el filtro de seguridad.";
   }
 
   function render() {
