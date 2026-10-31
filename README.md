@@ -8,7 +8,9 @@ Abre `index.html` en un navegador moderno. Los datos se guardan en el almacenami
 
 ## Publicación en GitHub Pages
 
-El workflow de GitHub Actions publica automáticamente la aplicación al hacer `push` a `main` o `master`, y también permite lanzarlo manualmente desde la pestaña **Actions**. En la configuración del repositorio, selecciona **Settings → Pages → Build and deployment → GitHub Actions**. La URL pública aparece en el despliegue completado y en el entorno `github-pages`.
+**Aplicación publicada:** https://alejandrovaltierracarbonero.github.io/eve-industry-mining-task-planner/
+
+El workflow de GitHub Actions publica automáticamente la aplicación al hacer `push` a `main` o `master`, y también permite lanzarlo manualmente desde la pestaña **Actions**. La URL pública aparece en el despliegue completado y en el entorno `github-pages`.
 
 ## Funcionalidad disponible
 
