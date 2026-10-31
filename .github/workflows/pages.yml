@@ -54,8 +54,9 @@ jobs:
           fi
       - name: Run application and catalog tests
         run: |
-          cd production
+          cd testing
           node --test planner.test.js
+          cd ../production
           python -m unittest discover -s scripts -p 'test_*.py'
       - name: Prepare static site
         run: |

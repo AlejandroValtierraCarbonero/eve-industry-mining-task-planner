@@ -101,6 +101,8 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .blueprint-selection-heading { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
 .blueprint-selection-heading strong { color: var(--accent); font: 500 13px "Space Grotesk", sans-serif; }
 .blueprint-english { margin: 3px 0 10px; }
+.blueprint-me-field { margin-top: 10px; }
+.blueprint-me-field small { display: block; color: var(--muted); font-size: 9px; line-height: 1.5; margin-top: 5px; }
 .blueprint-plan-summary { margin: 9px 0; color: #b7c5c6; font-size: 10px; line-height: 1.6; }
 .blueprint-material-preview { list-style: none; padding: 0; margin: 0 0 12px; max-height: 170px; overflow-y: auto; }
 .blueprint-material-preview li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid #2a3935; color: #d3dddb; font-size: 10px; }
@@ -111,6 +113,8 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .project-card.inactive { opacity: .58; }
 .project-title-row, .project-meta, .collection-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .project-name { font: 500 13px "Space Grotesk", sans-serif; overflow-wrap: anywhere; }
+.project-me-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; color: var(--muted); font-size: 9px; }
+.project-me-field input { width: 90px; padding: 6px 8px; }
 .priority-tag { color: var(--gold); font: 9px "DM Mono", monospace; }
 .project-materials { color: var(--muted); font-size: 10px; line-height: 1.7; margin: 10px 0; overflow-wrap: anywhere; }
 .project-meta { color: var(--muted); font-size: 10px; margin-bottom: 7px; }

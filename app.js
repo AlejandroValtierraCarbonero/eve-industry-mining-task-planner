@@ -14,7 +14,6 @@
     collected: {},
     settings: {
       efficiency: 100,
-      materialEfficiency: 0,
       holdCapacity: 100000,
       mineralVolume: 0.01
     }
@@ -48,18 +47,32 @@
       if (!stored) return defaultState();
       const parsed = JSON.parse(stored);
       const efficiency = Number(parsed.settings?.efficiency);
-      const materialEfficiency = Number(parsed.settings?.materialEfficiency);
+      const legacyMaterialEfficiency = Number(parsed.settings?.materialEfficiency);
       const holdCapacity = Number(parsed.settings?.holdCapacity);
       const mineralVolume = Number(parsed.settings?.mineralVolume);
+      const projects = (Array.isArray(parsed.projects) ? parsed.projects : []).map((project) => {
+        if (!Array.isArray(project.blueprintBaseMaterials)) return project;
+        const savedEfficiency = Number(project.blueprintMaterialEfficiency);
+        const materialEfficiency = Number.isFinite(savedEfficiency)
+          ? clamp(savedEfficiency, 0, 10)
+          : clamp(Number.isFinite(legacyMaterialEfficiency) ? legacyMaterialEfficiency : 0, 0, 10);
+        const migratedProject = { ...project, blueprintMaterialEfficiency: materialEfficiency };
+        try {
+          migratedProject.requirements = window.EvePlanner.getBlueprintMaterialRequirements(
+            project.blueprintBaseMaterials, materialEfficiency
+          );
+        } catch (error) {
+          console.error(`No se pudo migrar la ME de ${project.name}:`, error);
+          return migratedProject;
+        }
+        return migratedProject;
+      });
       return {
-        projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+        projects,
         ores: Array.isArray(parsed.ores) ? parsed.ores : [],
         collected: parsed.collected && typeof parsed.collected === "object" ? parsed.collected : {},
         settings: {
           efficiency: clamp(Number.isFinite(efficiency) ? efficiency : 100, 0, 100),
-          materialEfficiency: clamp(
-            Number.isFinite(materialEfficiency) ? materialEfficiency : 0, 0, 10
-          ),
           holdCapacity: Number.isFinite(holdCapacity) && holdCapacity > 0 ? holdCapacity : 100000,
           mineralVolume: Number.isFinite(mineralVolume) && mineralVolume > 0 ? mineralVolume : 0.01
         }
@@ -145,24 +158,26 @@
       selectedBlueprint = blueprintCatalog[Number(option.dataset.index)];
       if (!selectedBlueprint) return;
       searchInput.value = selectedBlueprint.name;
+      $("#blueprint-material-efficiency").value = "0";
       results.hidden = true;
       searchInput.setAttribute("aria-expanded", "false");
       $("#blueprint-search-empty").hidden = true;
       renderBlueprintSelection();
     });
     $("#blueprint-quantity").addEventListener("input", renderBlueprintSelection);
-    $("#material-efficiency").addEventListener("change", (event) => {
+    $("#blueprint-material-efficiency").addEventListener("change", (event) => {
       const value = Number(event.target.value);
-      if (!Number.isFinite(value) || value < 0 || value > 10) {
-        event.target.value = state.settings.materialEfficiency;
+      if (event.target.value === "" || !Number.isFinite(value) || value < 0 || value > 10) {
+        event.target.value = projectBlueprintDraft?.blueprintTypeId === selectedBlueprint?.blueprintTypeId
+          ? projectBlueprintDraft.materialEfficiency
+          : 0;
         showNotice("La eficiencia de materiales debe estar entre 0 y 10 %.", true);
         return;
       }
-      state.settings.materialEfficiency = value;
-      recalculateBlueprintProjects();
-      refreshBlueprintDraftMaterials();
-      saveState();
-      render();
+      if (projectBlueprintDraft?.blueprintTypeId === selectedBlueprint?.blueprintTypeId) {
+        projectBlueprintDraft.materialEfficiency = value;
+        refreshBlueprintDraftMaterials();
+      }
       renderBlueprintSelection();
     });
     $("#clear-blueprint").addEventListener("click", () => {
@@ -230,13 +245,14 @@
   function renderBlueprintSelection() {
     if (!selectedBlueprint) return;
     const requestedQuantity = Number($("#blueprint-quantity").value);
+    const rawEfficiency = $("#blueprint-material-efficiency").value;
     let plan;
     try {
       plan = window.EvePlanner.getBlueprintPlan(
-        selectedBlueprint, requestedQuantity, state.settings.materialEfficiency
+        selectedBlueprint, requestedQuantity, rawEfficiency === "" ? NaN : Number(rawEfficiency)
       );
     } catch {
-      $("#blueprint-plan-summary").textContent = "Introduce una cantidad válida.";
+      $("#blueprint-plan-summary").textContent = "Introduce una cantidad y una ME válidas.";
       $("#blueprint-material-preview").replaceChildren();
       $("#blueprint-selection").hidden = false;
       return;
@@ -256,13 +272,17 @@
   function applyBlueprintToProjectForm() {
     if (!selectedBlueprint) return;
     try {
+      const rawEfficiency = $("#blueprint-material-efficiency").value;
       const plan = window.EvePlanner.getBlueprintPlan(
         selectedBlueprint,
         Number($("#blueprint-quantity").value),
-        state.settings.materialEfficiency
+        rawEfficiency === "" ? NaN : Number(rawEfficiency)
       );
       $("#project-name").value = `${formatNumber(plan.requestedQuantity)} × ${selectedBlueprint.name}`;
       projectBlueprintDraft = {
+        blueprintTypeId: selectedBlueprint.blueprintTypeId,
+        blueprintName: selectedBlueprint.blueprintName,
+        materialEfficiency: plan.materialEfficiency,
         outputQuantity: selectedBlueprint.outputQuantity,
         requestedQuantity: plan.requestedQuantity,
         materials: plan.materials.map((material) => ({
@@ -291,13 +311,12 @@
   function recalculateBlueprintProjects() {
     for (const project of state.projects) {
       if (!Array.isArray(project.blueprintBaseMaterials)) continue;
-      project.requirements = {};
-      for (const material of project.blueprintBaseMaterials) {
-        const quantity = Math.ceil(
-          material.baseRequiredQuantity * (1 - state.settings.materialEfficiency / 100)
+      try {
+        project.requirements = window.EvePlanner.getBlueprintMaterialRequirements(
+          project.blueprintBaseMaterials, project.blueprintMaterialEfficiency
         );
-        project.requirements[material.name] =
-          (project.requirements[material.name] || 0) + quantity;
+      } catch (error) {
+        console.error(`No se pudieron recalcular los materiales de ${project.name}:`, error);
       }
     }
   }
@@ -308,9 +327,9 @@
       const quantityInput = ids.projectRows.children[index]
         ?.querySelector('[aria-label="Cantidad requerida"]');
       if (quantityInput) {
-        quantityInput.value = Math.ceil(
-          material.baseRequiredQuantity * (1 - state.settings.materialEfficiency / 100)
-        );
+        quantityInput.value = window.EvePlanner.getBlueprintMaterialRequirements(
+          [material], projectBlueprintDraft.materialEfficiency
+        )[material.name];
       }
     }
   }
@@ -359,6 +378,9 @@
         materialVolumes,
         materialEnglishNames,
         blueprintBaseMaterials: projectBlueprintDraft?.materials,
+        blueprintMaterialEfficiency: projectBlueprintDraft?.materialEfficiency,
+        blueprintTypeId: projectBlueprintDraft?.blueprintTypeId,
+        blueprintName: projectBlueprintDraft?.blueprintName,
         createdAt: Date.now()
       });
       form.reset();
@@ -495,6 +517,7 @@
       const priority = { 3: "ALTA", 2: "MEDIA", 1: "BAJA" }[project.priority] || "MEDIA";
       return `<article class="project-card ${project.active ? "" : "inactive"}">
         <div class="project-title-row"><strong class="project-name">${escapeHtml(project.name)}</strong><span class="priority-tag">${priority}</span></div>
+        ${Array.isArray(project.blueprintBaseMaterials) ? `<label class="project-me-field">ME del plano (${escapeHtml(project.blueprintName || "blueprint")}, %)<input type="number" min="0" max="10" step="0.1" required value="${escapeHtml(project.blueprintMaterialEfficiency ?? 0)}" data-action="set-blueprint-me" data-id="${escapeHtml(project.id)}" aria-label="ME del plano para ${escapeHtml(project.name)}"></label>` : ""}
         <p class="project-materials">${materialText}</p>
         <div class="project-meta"><span>${project.active ? `${formatNumber(progress)}% completado` : "Fuera del grupo actual"}</span>
           <div class="project-controls"><button class="toggle-button" type="button" data-action="toggle" data-id="${escapeHtml(project.id)}">${project.active ? "Desactivar" : "Activar"}</button><button class="delete-button" type="button" data-action="delete" data-id="${escapeHtml(project.id)}">Eliminar</button></div>
@@ -512,6 +535,21 @@
         else {
           state.projects = state.projects.filter((item) => item.id !== project.id);
         }
+        saveState();
+        render();
+      });
+    });
+    ids.projectList.querySelectorAll('input[data-action="set-blueprint-me"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        const project = state.projects.find((item) => item.id === input.dataset.id);
+        const value = Number(input.value);
+        if (!project || input.value === "" || !Number.isFinite(value) || value < 0 || value > 10) {
+          input.value = project?.blueprintMaterialEfficiency ?? 0;
+          showNotice("La eficiencia de materiales debe estar entre 0 y 10 %.", true);
+          return;
+        }
+        project.blueprintMaterialEfficiency = value;
+        recalculateBlueprintProjects();
         saveState();
         render();
       });
@@ -638,7 +676,6 @@
     renderCollection(requirements, allocations);
     renderOres();
     $("#efficiency").value = state.settings.efficiency;
-    $("#material-efficiency").value = state.settings.materialEfficiency;
     $("#hold-capacity").value = state.settings.holdCapacity;
     $("#mineral-volume").value = state.settings.mineralVolume;
   }

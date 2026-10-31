@@ -64,6 +64,10 @@
                 <label class="field-label" for="blueprint-quantity">Unidades que quieres fabricar
                   <input id="blueprint-quantity" type="number" min="1" step="1" value="1">
                 </label>
+                <label class="field-label blueprint-me-field" for="blueprint-material-efficiency">ME del plano que usarás (%)
+                  <input id="blueprint-material-efficiency" type="number" min="0" max="10" step="0.1" value="0" required>
+                  <small>Configura la ME de este plano; cada proyecto conserva su propio valor (0–10 %).</small>
+                </label>
                 <p id="blueprint-plan-summary" class="blueprint-plan-summary"></p>
                 <ul id="blueprint-material-preview" class="blueprint-material-preview"></ul>
                 <button id="apply-blueprint" class="secondary-button" type="button">Cargar materiales en el proyecto</button>
@@ -144,10 +148,9 @@
         <summary><span><span class="eyebrow">AJUSTES DEL PLAN</span><strong>Configuración industrial y de carga</strong></span><span class="chevron">⌄</span></summary>
         <div class="settings-content">
           <label class="field-label" for="efficiency">Eficiencia de reprocesamiento (%)<input id="efficiency" type="number" min="0" max="100" step="0.1"></label>
-          <label class="field-label" for="material-efficiency">Eficiencia de materiales del blueprint (ME, %)<input id="material-efficiency" type="number" min="0" max="10" step="0.1"><small>ME del blueprint: de 0 a 10 %. Se aplica al coste total y se redondea hacia arriba.</small></label>
           <label class="field-label" for="hold-capacity">Capacidad de carga de la nave (m³)<input id="hold-capacity" type="number" min="1" step="any"></label>
           <label class="field-label" for="mineral-volume">Volumen por unidad de material manual (m³)<input id="mineral-volume" type="number" min="0.000001" step="any"></label>
-          <p>La eficiencia de reprocesamiento afecta al rendimiento de las menas. ME afecta únicamente al cálculo de blueprints del SDE; no incluye bonificaciones de estructuras ni rigs. Los materiales SDE usan su volumen oficial; el volumen manual se aplica a materiales introducidos a mano.</p>
+          <p>La eficiencia de reprocesamiento afecta al rendimiento de las menas. La ME se configura por plano SDE en cada proyecto y no incluye bonificaciones de estructuras ni rigs. Los materiales SDE usan su volumen oficial; el volumen manual se aplica a materiales introducidos a mano.</p>
         </div>
       </details>
 

@@ -30,6 +30,23 @@
       .map((item) => item.blueprint);
   }
 
+  function getBlueprintMaterialRequirements(materials, materialEfficiency) {
+    const efficiency = Number(materialEfficiency);
+    if (!Array.isArray(materials) || !materials.length ||
+      !Number.isFinite(efficiency) || efficiency < 0 || efficiency > 10) {
+      throw new RangeError("Blueprint materials and material efficiency must be valid.");
+    }
+    return materials.reduce((requirements, material) => {
+      const baseQuantity = Number(material.baseRequiredQuantity);
+      if (!material.name || !Number.isFinite(baseQuantity) || baseQuantity < 0) {
+        throw new RangeError("Blueprint material quantities must be valid.");
+      }
+      requirements[material.name] = (requirements[material.name] || 0)
+        + Math.ceil(baseQuantity * (1 - efficiency / 100));
+      return requirements;
+    }, {});
+  }
+
   function getBlueprintPlan(blueprint, requestedQuantity, materialEfficiency = 0) {
     const quantity = Math.ceil(Number(requestedQuantity));
     const outputQuantity = Number(blueprint?.outputQuantity);
@@ -51,7 +68,9 @@
         return {
           ...material,
           baseRequiredQuantity,
-          requiredQuantity: Math.ceil(baseRequiredQuantity * (1 - efficiency / 100))
+          requiredQuantity: getBlueprintMaterialRequirements(
+            [{ name: material.name, baseRequiredQuantity }], efficiency
+          )[material.name]
         };
       })
     };
@@ -146,6 +165,7 @@
   return {
     MINERALS,
     searchBlueprints,
+    getBlueprintMaterialRequirements,
     getBlueprintPlan,
     getRequirements,
     allocateMinerals,

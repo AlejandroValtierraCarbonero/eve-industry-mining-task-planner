@@ -18,13 +18,13 @@ El workflow de GitHub Actions publica automáticamente la versión estable desde
 
 - Crear proyectos con materiales manuales, prioridad y activación en el grupo de recolección.
 - En el entorno de pruebas, buscar 4.000+ productos fabricables del EVE Online SDE y cargar sus materiales base al proyecto.
-- Configurar la eficiencia de materiales (ME) del blueprint entre 0 y 10 %; los blueprints del proyecto se recalculan al cambiarla, con redondeo hacia arriba por material.
+- Configurar la eficiencia de materiales (ME) entre 0 y 10 % para cada blueprint; cada proyecto conserva su valor y recalcula sus requisitos de forma independiente.
 - Agregar necesidades del grupo y calcular el progreso global e individual.
 - Registrar materiales obtenidos, asignarlos por prioridad y mostrar excedentes.
 - Definir perfiles de menas, rendimientos por lote, eficiencia de reprocesamiento, capacidad de carga y volumen para materiales manuales.
 - Obtener recomendaciones heurísticas para el mineral pendiente más crítico.
 
-Los perfiles de rendimiento deben introducirse según la configuración real del personaje y la estructura. La ME configurada aplica una reducción global al coste del blueprint, con redondeo hacia arriba por material; no incluye bonificaciones de estructura, rigs ni excepciones específicas por material. El volumen de materiales del SDE usa sus datos oficiales; los materiales introducidos manualmente usan el volumen por unidad configurado en los ajustes.
+Los perfiles de rendimiento deben introducirse según la configuración real del personaje y la estructura. La ME se configura en el plano usado para cada proyecto y aplica una reducción a su coste total, con redondeo hacia arriba por material; no incluye bonificaciones de estructura, rigs ni excepciones específicas por material. Los proyectos guardados antes de esta configuración conservan el ME global que tenían como valor inicial individual. El volumen de materiales del SDE usa sus datos oficiales; los materiales introducidos manualmente usan el volumen por unidad configurado en los ajustes.
 
 ## Límites y siguientes fases
 

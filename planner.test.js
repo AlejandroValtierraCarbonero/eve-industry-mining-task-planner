@@ -84,3 +84,19 @@ test("aplica ME al total del trabajo y redondea hacia arriba por material", () =
     materials: [{ name: "Tritanio", quantity: 4 }]
   }, 1, 10.1), RangeError);
 });
+
+test("calcula la ME de cada proyecto de blueprint de forma independiente", () => {
+  const materials = [
+    { name: "Tritanio", baseRequiredQuantity: 100 },
+    { name: "Pierita", baseRequiredQuantity: 25 }
+  ];
+  assert.deepEqual(planner.getBlueprintMaterialRequirements(materials, 0), {
+    Tritanio: 100,
+    Pierita: 25
+  });
+  assert.deepEqual(planner.getBlueprintMaterialRequirements(materials, 10), {
+    Tritanio: 90,
+    Pierita: 23
+  });
+  assert.throws(() => planner.getBlueprintMaterialRequirements(materials, 10.1), RangeError);
+});
