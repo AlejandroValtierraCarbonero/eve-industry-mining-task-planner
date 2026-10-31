@@ -495,7 +495,7 @@
       return sum + Math.max(0, required - (Number(state.collected[material]) || 0)) * unitVolume;
     }, 0);
     const trips = pendingVolume ? Math.ceil(pendingVolume / state.settings.holdCapacity) : 0;
-    $("#collection-volume").textContent = `Volumen de minerales pendiente: ${formatNumber(pendingVolume)} m³ · ${trips === 1 ? "1 viaje estimado" : `${trips} viajes estimados`}`;
+    $("#collection-volume").textContent = `Volumen de materiales pendiente: ${formatNumber(pendingVolume)} m³ · ${trips === 1 ? "1 viaje estimado" : `${trips} viajes estimados`}`;
 
     const activeProjects = state.projects.filter((project) => project.active);
     ids.progressList.innerHTML = activeProjects.map((project) => {

@@ -19,11 +19,11 @@ El workflow de GitHub Actions publica automáticamente la versión estable desde
 - Crear proyectos con materiales manuales, prioridad y activación en el grupo de recolección.
 - En el entorno de pruebas, buscar 4.000+ productos fabricables del EVE Online SDE y cargar sus materiales base al proyecto.
 - Agregar necesidades del grupo y calcular el progreso global e individual.
-- Registrar minerales obtenidos, asignarlos por prioridad y mostrar excedentes.
-- Definir perfiles de menas, rendimientos por lote, eficiencia de reprocesamiento, capacidad de carga y volumen por unidad de mineral.
+- Registrar materiales obtenidos, asignarlos por prioridad y mostrar excedentes.
+- Definir perfiles de menas, rendimientos por lote, eficiencia de reprocesamiento, capacidad de carga y volumen para materiales manuales.
 - Obtener recomendaciones heurísticas para el mineral pendiente más crítico.
 
-Los perfiles de rendimiento deben introducirse según la configuración real del personaje y la estructura. Los requisitos del catálogo son los valores base del SDE; todavía no aplican la eficiencia del blueprint ni bonificaciones de estructura. El volumen de materiales del SDE usa sus datos oficiales; los materiales introducidos manualmente usan el volumen por unidad configurado en los ajustes.
+Los perfiles de rendimiento deben introducirse según la configuración real del personaje y la estructura. Los requisitos del catálogo son los valores base del SDE; todavía no aplican la eficiencia de material (ME) ni las bonificaciones de estructura. El volumen de materiales del SDE usa sus datos oficiales; los materiales introducidos manualmente usan el volumen por unidad configurado en los ajustes.
 
 ## Límites y siguientes fases
 
