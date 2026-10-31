@@ -166,6 +166,77 @@
     }).filter(Boolean).sort((a, b) => a.volume - b.volume);
   }
 
+  function planOreCollection(requirements, collected, ores, selectedOreKeys, minedOres, efficiency) {
+    const efficiencyRate = Math.max(0, Math.min(100, Number(efficiency) || 0)) / 100;
+    if (!efficiencyRate) return [];
+    const oreByKey = new Map(ores.map((ore) => [ore.key, ore]));
+    const mined = Object.fromEntries(Object.entries(minedOres || {}).map(([key, amount]) => [
+      key, Math.max(0, Number(amount) || 0)
+    ]));
+    const deficits = Object.fromEntries(Object.entries(requirements || {}).map(([mineral, amount]) => [
+      mineral, Math.max(0, Number(amount) - (Number(collected?.[mineral]) || 0))
+    ]));
+
+    for (const [key, units] of Object.entries(mined)) {
+      const ore = oreByKey.get(key);
+      if (!ore) continue;
+      const portionSize = Number(ore.portionSize) || 1;
+      const completeBatches = Math.floor(units / portionSize);
+      for (const [mineral, baseYield] of Object.entries(ore.yields || {})) {
+        deficits[mineral] = Math.max(
+          0,
+          (deficits[mineral] || 0) - completeBatches * (Number(baseYield) || 0) * efficiencyRate
+        );
+      }
+    }
+
+    const plannedKeys = new Set([
+      ...(Array.isArray(selectedOreKeys) ? selectedOreKeys : []),
+      ...Object.entries(mined).filter(([, amount]) => amount > 0).map(([key]) => key)
+    ]);
+
+    return [...plannedKeys].flatMap((key) => {
+      const ore = oreByKey.get(key);
+      if (!ore) return [];
+      const portionSize = Number(ore.portionSize) || 1;
+      const batchVolume = Number(ore.batchVolume) || Number(ore.volume) * portionSize;
+      const minedUnits = mined[key] || 0;
+      const currentCompleteBatches = Math.floor(minedUnits / portionSize);
+      const partialBatchUnits = minedUnits - currentCompleteBatches * portionSize;
+      const oreDeficits = Object.entries(deficits)
+        .map(([mineral, amount]) => ({
+          mineral,
+          amount,
+          share: Number(requirements?.[mineral]) > 0
+            ? amount / Number(requirements[mineral])
+            : 0,
+          outputPerBatch: (Number(ore.yields?.[mineral]) || 0) * efficiencyRate
+        }))
+        .filter((item) => item.amount > 0 && item.outputPerBatch > 0)
+        .sort((a, b) => b.share - a.share || b.amount - a.amount);
+      const target = oreDeficits[0];
+      const additionalBatches = target ? Math.ceil(target.amount / target.outputPerBatch) : 0;
+      const pendingUnits = target
+        ? Math.max(0, additionalBatches * portionSize - partialBatchUnits)
+        : 0;
+      const pendingVolume = additionalBatches * batchVolume;
+
+      return [{
+        ...ore,
+        mineral: target?.mineral || null,
+        batches: additionalBatches,
+        outputPerBatch: target?.outputPerBatch || 0,
+        estimatedOutput: additionalBatches * (target?.outputPerBatch || 0),
+        minedUnits,
+        requiredUnits: minedUnits + pendingUnits,
+        pendingUnits,
+        batchVolume,
+        volume: pendingVolume,
+        currentCompleteBatches
+      }];
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   return {
     MINERALS,
     searchBlueprints,
@@ -176,6 +247,7 @@
     getProgress,
     getGroupProgress,
     getOverflow,
-    recommendOres
+    recommendOres,
+    planOreCollection
   };
 });

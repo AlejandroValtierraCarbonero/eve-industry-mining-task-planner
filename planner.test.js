@@ -70,6 +70,96 @@ test("recomienda menas del SDE usando el volumen total de su lote", () => {
   assert.equal(reducedEfficiency[0].rawUnits, 300);
 });
 
+test("recalcula alternativas seleccionadas con los coproductos de mena ya minada", () => {
+  const ores = [
+    {
+      key: "veld",
+      name: "Veldspar",
+      portionSize: 100,
+      batchVolume: 10,
+      yields: { Tritanium: 400 }
+    },
+    {
+      key: "scord",
+      name: "Scordite",
+      portionSize: 100,
+      batchVolume: 15,
+      yields: { Tritanium: 150, Pyerite: 90 }
+    }
+  ];
+  const plan = planner.planOreCollection(
+    { Tritanium: 400, Pyerite: 100 },
+    {},
+    ores,
+    ["veld", "scord"],
+    {},
+    100
+  );
+  assert.deepEqual(plan.map(({ name, requiredUnits, pendingUnits, mineral }) => ({
+    name, requiredUnits, pendingUnits, mineral
+  })), [
+    { name: "Scordite", requiredUnits: 300, pendingUnits: 300, mineral: "Tritanium" },
+    { name: "Veldspar", requiredUnits: 100, pendingUnits: 100, mineral: "Tritanium" }
+  ]);
+
+  const afterMining = planner.planOreCollection(
+    { Tritanium: 400, Pyerite: 100 },
+    {},
+    ores,
+    ["veld", "scord"],
+    { veld: 100 },
+    100
+  );
+  assert.deepEqual(afterMining.map(({ name, requiredUnits, minedUnits, pendingUnits, mineral }) => ({
+    name, requiredUnits, minedUnits, pendingUnits, mineral
+  })), [
+    { name: "Scordite", requiredUnits: 200, minedUnits: 0, pendingUnits: 200, mineral: "Pyerite" },
+    { name: "Veldspar", requiredUnits: 100, minedUnits: 100, pendingUnits: 0, mineral: null }
+  ]);
+
+  const complete = planner.planOreCollection(
+    { Tritanium: 400, Pyerite: 100 },
+    {},
+    ores,
+    ["veld", "scord"],
+    { veld: 100, scord: 200 },
+    100
+  );
+  assert.equal(complete.every((ore) => ore.pendingUnits === 0), true);
+});
+
+test("incluye mena registrada al completar el lote y descuenta minerales base", () => {
+  const plan = planner.planOreCollection(
+    { Tritanium: 402 },
+    { Tritanium: 1 },
+    [{
+      key: "veld",
+      name: "Veldspar",
+      portionSize: 100,
+      batchVolume: 10,
+      yields: { Tritanium: 400 }
+    }],
+    ["veld"],
+    { veld: 50 },
+    100
+  );
+  assert.equal(plan[0].requiredUnits, 200);
+  assert.equal(plan[0].minedUnits, 50);
+  assert.equal(plan[0].pendingUnits, 150);
+});
+
+test("no estima cantidades de mena con eficiencia de reprocesamiento cero", () => {
+  const plan = planner.planOreCollection(
+    { Tritanium: 100 },
+    {},
+    [{ key: "veld", name: "Veldspar", portionSize: 100, yields: { Tritanium: 400 } }],
+    ["veld"],
+    {},
+    0
+  );
+  assert.deepEqual(plan, []);
+});
+
 test("busca blueprints sin distinguir mayúsculas ni acentos y limita resultados", () => {
   const catalog = [
     { name: "La Drake", englishName: "Drake" },

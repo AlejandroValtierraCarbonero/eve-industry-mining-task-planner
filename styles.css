@@ -149,7 +149,28 @@ td:last-child { color: var(--gold); }
 .ore-form { margin-top: 18px; }
 .ore-form .form-row { align-items: start; }
 .ore-form small { color: var(--muted); font-size: 9px; }
+.ore-security-field { margin-top: 13px; }
 .form-actions { display: flex; gap: 13px; align-items: center; margin-top: 15px; }
+.ore-catalog { margin-top: 18px; padding: 14px; border: 1px solid rgba(69, 86, 97, .55); border-radius: 5px; background: rgba(10, 15, 20, .24); }
+.ore-catalog-heading, .ore-catalog-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ore-catalog-heading { margin-bottom: 12px; }
+.ore-catalog-heading .eyebrow { margin-bottom: 5px; }
+.ore-catalog-heading strong { font: 500 13px "Space Grotesk", sans-serif; }
+.ore-catalog-filters { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(180px, 1fr); gap: 10px; }
+.ore-catalog-filters .field-label { gap: 5px; }
+.ore-catalog-filters input, .ore-catalog-filters select { width: 100%; color: var(--text); background: #11181e; border: 1px solid #35424c; border-radius: 4px; padding: 9px 10px; outline: none; font-size: 10px; }
+.ore-catalog-actions { justify-content: flex-start; margin: 8px 0; }
+.ore-catalog-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 5px; max-height: 360px; overflow-y: auto; padding: 1px; }
+.ore-catalog-choice { display: flex; align-items: flex-start; gap: 8px; min-width: 0; padding: 8px; border: 1px solid #2a3641; border-radius: 4px; background: #151c23; cursor: pointer; }
+.ore-catalog-choice:hover { border-color: #42645d; background: #192720; }
+.ore-catalog-choice input { flex: 0 0 auto; margin: 2px 0 0; }
+.ore-catalog-choice span, .ore-catalog-choice strong, .ore-catalog-choice small { display: block; min-width: 0; }
+.ore-catalog-choice strong { color: #dce5e8; font-size: 10px; font-weight: 500; overflow-wrap: anywhere; }
+.ore-catalog-choice small { margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.4; }
+.ore-security-note { margin: 9px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.ore-collection-footer { align-items: flex-start; }
+.ore-collection-footer .text-button { flex: 0 0 auto; text-align: right; }
+.ore-collection-footer .text-button:disabled { opacity: .45; cursor: not-allowed; text-decoration: none; }
 .recommendation-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 17px; }
 .recommendation-card { border: 1px solid #36554f; border-radius: 5px; padding: 13px; background: #15241f; }
 .recommendation-card strong { display: block; color: var(--accent); font: 500 13px "Space Grotesk", sans-serif; margin-bottom: 2px; }
@@ -193,6 +214,9 @@ td:last-child { color: var(--gold); }
   .panel { padding: 17px 14px; }
   .inline-form { grid-template-columns: minmax(0, 1fr) minmax(80px, .75fr); }
   .inline-form button { grid-column: 1 / -1; }
+  .ore-catalog-filters { grid-template-columns: 1fr; }
+  .ore-collection-footer { flex-direction: column; }
+  .ore-collection-footer .text-button { text-align: left; }
   .form-row { gap: 9px; }
   .settings-content { grid-template-columns: 1fr; }
   .settings-content p { grid-column: auto; }

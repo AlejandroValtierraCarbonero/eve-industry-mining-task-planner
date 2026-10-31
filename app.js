@@ -13,6 +13,8 @@
     ores: [],
     collected: {},
     minedOres: {},
+    selectedOres: [],
+    oreMiningMineralBaseline: null,
     settings: {
       efficiency: 100,
       holdCapacity: 100000,
@@ -35,7 +37,8 @@
     progressList: $("#progress-list"),
     oreList: $("#ore-list"),
     recommendation: $("#ore-recommendation"),
-    recommendedOreSelect: $("#recommended-ore")
+    recommendedOreSelect: $("#recommended-ore"),
+    oreCatalogList: $("#ore-catalog-list")
   };
 
   function escapeHtml(value) {
@@ -53,6 +56,12 @@
       const legacyMaterialEfficiency = Number(parsed.settings?.materialEfficiency);
       const holdCapacity = Number(parsed.settings?.holdCapacity);
       const mineralVolume = Number(parsed.settings?.mineralVolume);
+      const collected = parsed.collected && typeof parsed.collected === "object" ? parsed.collected : {};
+      const minedOres = parsed.minedOres && typeof parsed.minedOres === "object" ? parsed.minedOres : {};
+      const oreMiningMineralBaseline = parsed.oreMiningMineralBaseline &&
+        typeof parsed.oreMiningMineralBaseline === "object"
+        ? parsed.oreMiningMineralBaseline
+        : Object.keys(minedOres).length ? { ...collected } : null;
       const projects = (Array.isArray(parsed.projects) ? parsed.projects : []).map((project) => {
         if (!Array.isArray(project.blueprintBaseMaterials)) return project;
         const savedEfficiency = Number(project.blueprintMaterialEfficiency);
@@ -73,8 +82,12 @@
       return {
         projects,
         ores: Array.isArray(parsed.ores) ? parsed.ores : [],
-        collected: parsed.collected && typeof parsed.collected === "object" ? parsed.collected : {},
-        minedOres: parsed.minedOres && typeof parsed.minedOres === "object" ? parsed.minedOres : {},
+        collected,
+        minedOres,
+        selectedOres: Array.isArray(parsed.selectedOres)
+          ? parsed.selectedOres.filter((key) => typeof key === "string")
+          : Object.keys(minedOres),
+        oreMiningMineralBaseline,
         settings: {
           efficiency: clamp(Number.isFinite(efficiency) ? efficiency : 100, 0, 100),
           holdCapacity: Number.isFinite(holdCapacity) && holdCapacity > 0 ? holdCapacity : 100000,
@@ -112,6 +125,14 @@
 
   function formatNumber(value) {
     return new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(value);
+  }
+
+  function getOreTrackingKey(ore) {
+    return ore.typeId !== undefined ? `sde:${ore.typeId}` : `custom:${ore.id}`;
+  }
+
+  function normalizeOreSearch(value) {
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
   }
 
   function addMaterialRow(container, initialMineral) {
@@ -416,7 +437,9 @@
       event.currentTarget.reset();
       saveState();
       render();
-      showNotice(`${formatNumber(amount)} unidades de ${mineral} registradas.`);
+      showNotice(state.oreMiningMineralBaseline
+        ? `${formatNumber(amount)} unidades de ${mineral} registradas. Al terminar el reprocesado de la mena, finaliza también su ciclo para actualizar el plan.`
+        : `${formatNumber(amount)} unidades de ${mineral} registradas.`);
     });
 
     $("#ore-collection-form").addEventListener("submit", (event) => {
@@ -427,6 +450,9 @@
       if (!oreKey || !Number.isFinite(amount) || amount <= 0) {
         showNotice("Selecciona una mena e introduce una cantidad mayor que cero.", true);
         return;
+      }
+      if (!state.oreMiningMineralBaseline) {
+        state.oreMiningMineralBaseline = { ...state.collected };
       }
       state.minedOres[oreKey] = (Number(state.minedOres[oreKey]) || 0) + amount;
       form.elements.amount.value = "";
@@ -442,6 +468,7 @@
       }
       if (!window.confirm("¿Vaciar todas las cantidades recolectadas? Esta acción no se puede deshacer.")) return;
       state.collected = {};
+      state.oreMiningMineralBaseline = {};
       saveState();
       render();
       showNotice("Registro de recolección vaciado.");
@@ -456,6 +483,45 @@
       $("#ore-form").hidden = true;
     });
     $("#ore-form").addEventListener("submit", handleOreSubmit);
+
+    $("#ore-security-filter").addEventListener("change", renderOres);
+    $("#ore-search").addEventListener("input", renderOres);
+    ids.oreCatalogList.addEventListener("change", (event) => {
+      const checkbox = event.target.closest("input[data-ore-key]");
+      if (!checkbox) return;
+      const key = checkbox.dataset.oreKey;
+      state.selectedOres = checkbox.checked
+        ? [...new Set([...state.selectedOres, key])]
+        : state.selectedOres.filter((selectedKey) => selectedKey !== key);
+      saveState();
+      renderOres();
+    });
+    $("#select-visible-ores").addEventListener("click", () => {
+      const visibleKeys = getVisibleOres(getOreCatalog()).map((ore) => ore.key);
+      state.selectedOres = [...new Set([...state.selectedOres, ...visibleKeys])];
+      saveState();
+      renderOres();
+    });
+    $("#clear-selected-ores").addEventListener("click", () => {
+      const visibleKeys = new Set(getVisibleOres(getOreCatalog()).map((ore) => ore.key));
+      state.selectedOres = state.selectedOres.filter((key) => !visibleKeys.has(key));
+      saveState();
+      renderOres();
+    });
+    $("#finish-ore-processing").addEventListener("click", () => {
+      if (!Object.values(state.minedOres).some((amount) => Number(amount) > 0)) {
+        showNotice("No hay mena registrada que finalizar.");
+        return;
+      }
+      if (!window.confirm(
+        "Confirma que has reprocesado toda la mena registrada y apuntado los minerales obtenidos en Recolección. Se reiniciará el registro de mena y se usará el inventario actual de minerales como nueva base."
+      )) return;
+      state.minedOres = {};
+      state.oreMiningMineralBaseline = { ...state.collected };
+      saveState();
+      render();
+      showNotice("Ciclo de reprocesado finalizado. El plan de mena ahora parte de los minerales registrados.");
+    });
 
     $("#efficiency").addEventListener("change", (event) => {
       const value = Number(event.target.value);
@@ -498,6 +564,7 @@
     const name = form.elements.name.value.trim();
     const volume = Number(form.elements.volume.value);
     const portionSize = Number(form.elements.portionSize.value);
+    const securityZone = form.elements.securityZone.value;
     const yields = {};
     for (const line of form.elements.yields.value.split(/\r?\n/)) {
       if (!line.trim()) continue;
@@ -523,10 +590,13 @@
       id: crypto.randomUUID(),
       name,
       system: form.elements.system.value.trim(),
+      securityZones: securityZone === "unclassified" ? ["unclassified"] : [securityZone],
       volume,
       portionSize,
       yields
     });
+    const key = getOreTrackingKey(state.ores[state.ores.length - 1]);
+    state.selectedOres = [...new Set([...state.selectedOres, key])];
     form.reset();
     form.hidden = true;
     saveState();
@@ -656,48 +726,116 @@
         }
       }
     }
-    for (const [material, amount] of Object.entries(state.collected)) {
+    const orePlanBaseline = state.oreMiningMineralBaseline || state.collected;
+    for (const [material, amount] of Object.entries(orePlanBaseline)) {
       const mineral = canonicalMineral(material);
       if (MINERALS.includes(mineral)) {
         mineralCollected[mineral] = (mineralCollected[mineral] || 0) + amount;
       }
     }
-    const oreCatalog = [
-      ...sdeOres.map((ore) => ({ ...ore, source: "SDE oficial" })),
-      ...state.ores.map((ore) => ({ ...ore, source: "Personalizada" }))
-    ];
-    const suggestions = window.EvePlanner.recommendOres(
-      mineralRequirements, mineralCollected, oreCatalog, state.settings.efficiency
-    ).slice(0, 3).map((ore) => ({
-      ...ore,
-      trackingKey: ore.typeId ? `sde:${ore.typeId}` : `custom:${ore.id}`,
-      mined: Number(state.minedOres[ore.typeId ? `sde:${ore.typeId}` : `custom:${ore.id}`]) || 0
-    }));
-    ids.recommendedOreSelect.innerHTML = suggestions.map((ore) =>
-      `<option value="${escapeHtml(ore.trackingKey)}">${escapeHtml(ore.name)} · ${escapeHtml(ore.source)}</option>`
+    const oreCatalog = getOreCatalog();
+    const selectedKeys = new Set(state.selectedOres);
+    const selectedOres = oreCatalog.filter((ore) =>
+      selectedKeys.has(ore.key) || Number(state.minedOres[ore.key]) > 0
+    );
+    const plan = window.EvePlanner.planOreCollection(
+      mineralRequirements,
+      mineralCollected,
+      oreCatalog,
+      selectedOres.map((ore) => ore.key),
+      state.minedOres,
+      state.settings.efficiency
+    );
+    ids.recommendedOreSelect.innerHTML = plan.map((ore) =>
+      `<option value="${escapeHtml(ore.key)}">${escapeHtml(ore.name)} · ${escapeHtml(ore.source)}</option>`
     ).join("");
-    ids.recommendedOreSelect.disabled = suggestions.length === 0;
-    ids.recommendation.innerHTML = suggestions.map((ore) =>
-      `<tr><td>${escapeHtml(ore.name)}<small class="ore-source">${escapeHtml(ore.source)} · ${escapeHtml(ore.mineral)} · ${formatNumber(ore.batches)} ${ore.batches === 1 ? "lote" : "lotes"} · ${formatNumber(ore.volume)} m³</small></td><td>${formatNumber(ore.rawUnits)}</td><td>${formatNumber(ore.mined)}</td><td>${formatNumber(Math.max(0, ore.rawUnits - ore.mined))}</td></tr>`
+    ids.recommendedOreSelect.disabled = plan.length === 0;
+    ids.recommendation.innerHTML = plan.map((ore) =>
+      `<tr><td>${escapeHtml(ore.name)}<small class="ore-source">${escapeHtml(ore.source)} · ${formatNumber(ore.batches)} ${ore.batches === 1 ? "lote adicional" : "lotes adicionales"} · ${formatNumber(ore.volume)} m³ estimados</small></td><td>${ore.mineral ? escapeHtml(ore.mineral) : "—"}</td><td>${formatNumber(ore.requiredUnits)}</td><td>${formatNumber(ore.minedUnits)}</td><td>${formatNumber(ore.pendingUnits)}</td></tr>`
     ).join("");
+    renderOreCatalog(oreCatalog);
     const emptyOreTable = $("#empty-ore-recommendation");
-    emptyOreTable.hidden = suggestions.length > 0;
+    emptyOreTable.hidden = plan.length > 0;
     emptyOreTable.textContent = !Object.keys(mineralRequirements).length
-      ? "Activa un proyecto con minerales pendientes para generar recomendaciones."
+      ? "Activa un proyecto con minerales pendientes para calcular las cantidades de mena."
       : !state.settings.efficiency
-        ? "Configura una eficiencia de reprocesamiento mayor que 0 % para estimar rendimientos."
-        : "No hay datos de menas que produzcan el mineral prioritario.";
+        ? "Configura una eficiencia de reprocesamiento mayor que 0 % para estimar las cantidades de mena."
+        : state.selectedOres.length || Object.keys(state.minedOres).length
+          ? "No hay menas seleccionadas con cantidades registradas."
+          : "Selecciona en el catálogo las menas que tienes disponibles.";
+    const minedCount = Object.values(state.minedOres).filter((amount) => Number(amount) > 0).length;
+    $("#finish-ore-processing").disabled = minedCount === 0;
+    $("#ore-cycle-status").textContent = minedCount
+      ? `${formatNumber(minedCount)} ${minedCount === 1 ? "mena registrada" : "menas registradas"} · al reprocesarlas, registra sus minerales y finaliza el ciclo.`
+      : "La mena minada se mantiene separada de los minerales reprocesados.";
     ids.oreList.innerHTML = state.ores.map((ore) =>
       `<div class="ore-chip"><span>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</span><small>${formatNumber(ore.portionSize || 1)} unidades · ${formatNumber(ore.volume)} m³/lote</small><button type="button" data-id="${escapeHtml(ore.id)}" aria-label="Eliminar perfil de ${escapeHtml(ore.name)}">×</button></div>`
     ).join("");
     ids.oreList.querySelectorAll("button[data-id]").forEach((button) => {
       button.addEventListener("click", () => {
+        const key = `custom:${button.dataset.id}`;
+        if (Number(state.minedOres[key]) > 0 && !window.confirm(
+          "Esta mena tiene unidades minadas registradas. ¿Eliminar también su perfil y ese registro?"
+        )) return;
         state.ores = state.ores.filter((ore) => ore.id !== button.dataset.id);
+        state.selectedOres = state.selectedOres.filter((selectedKey) => selectedKey !== key);
+        delete state.minedOres[key];
         saveState();
         render();
         showNotice("Perfil de mena eliminado.");
       });
     });
+  }
+
+  function getOreCatalog() {
+    return [
+      ...sdeOres.map((ore) => ({
+        ...ore,
+        key: getOreTrackingKey(ore),
+        securityZones: ore.securityZones || ["unclassified"],
+        source: "SDE oficial"
+      })),
+      ...state.ores.map((ore) => ({
+        ...ore,
+        key: getOreTrackingKey(ore),
+        securityZones: ore.securityZones || ["unclassified"],
+        source: "Personalizada"
+      }))
+    ];
+  }
+
+  function getVisibleOres(oreCatalog) {
+    const zone = $("#ore-security-filter").value;
+    const query = normalizeOreSearch($("#ore-search").value).trim();
+    return oreCatalog.filter((ore) => {
+      const matchesZone = zone === "all" || ore.securityZones.includes(zone);
+      const searchableText = normalizeOreSearch(
+        `${ore.name} ${ore.englishName || ""} ${ore.system || ""}`
+      );
+      return matchesZone && (!query || searchableText.includes(query));
+    });
+  }
+
+  function renderOreCatalog(oreCatalog) {
+    const visibleOres = getVisibleOres(oreCatalog);
+    const selectedKeys = new Set(state.selectedOres);
+    $("#ore-catalog-count").textContent =
+      `${formatNumber(visibleOres.length)} visibles · ${formatNumber(state.selectedOres.length)} seleccionadas`;
+    ids.oreCatalogList.innerHTML = visibleOres.map((ore) => {
+      const checked = selectedKeys.has(ore.key);
+      const zones = ore.securityZones.map((zone) => ({
+        high: "Alta",
+        medium: "Media",
+        low: "Baja",
+        null: "Nula",
+        unclassified: "Sin clasificar"
+      })[zone] || zone);
+      return `<label class="ore-catalog-choice">
+        <input type="checkbox" data-ore-key="${escapeHtml(ore.key)}"${checked ? " checked" : ""}>
+        <span><strong>${escapeHtml(ore.name)}</strong><small>${escapeHtml(ore.source)} · ${escapeHtml(zones.join(", "))}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</small></span>
+      </label>`;
+    }).join("");
+    $("#empty-ore-catalog").hidden = visibleOres.length > 0;
   }
 
   function render() {

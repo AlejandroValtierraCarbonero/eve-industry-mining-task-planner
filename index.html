@@ -127,12 +127,21 @@
           <div><p class="eyebrow">PLANIFICACIÓN DE MINERÍA</p><h2>Recomendación de menas</h2></div>
           <button id="add-ore-toggle" class="secondary-button" type="button">Configurar una mena <span aria-hidden="true">＋</span></button>
         </div>
-        <p class="section-copy">La tabla sigue las unidades de mena sin procesar minadas, igual que el seguimiento de materiales. Cada fila es una alternativa para cubrir el déficit de mineral más crítico; no sumes las filas entre sí. Las cantidades usan el catálogo SDE y tu eficiencia de reprocesamiento.</p>
+        <p class="section-copy">Filtra el catálogo oficial por seguridad y selecciona las menas que puedes minar. Cada fila calcula cuánto de esa mena necesitarías para su mineral pendiente más importante; las alternativas no se suman. La mena registrada descuenta sus rendimientos estimados de las demás opciones sin mezclarse con los minerales reprocesados.</p>
         <form id="ore-form" class="entry-form ore-form" hidden>
           <div class="form-row">
             <label class="field-label">Nombre de la mena<input name="name" maxlength="80" placeholder="Ej. Veldspar" required></label>
             <label class="field-label">Sistema (opcional)<input name="system" maxlength="80" placeholder="Ej. Jita"></label>
           </div>
+          <label class="field-label ore-security-field">Seguridad donde está disponible
+            <select name="securityZone">
+              <option value="unclassified">Sin clasificar</option>
+              <option value="high">Alta (0,8–1,0)</option>
+              <option value="medium">Media (0,5–0,7)</option>
+              <option value="low">Baja (0,1–0,4)</option>
+              <option value="null">Nula (0,0 o menos)</option>
+            </select>
+          </label>
           <div class="form-row">
             <label class="field-label">Volumen por lote (m³)<input name="volume" type="number" min="0.001" step="any" placeholder="Ej. 10" required></label>
             <label class="field-label">Salida por lote<textarea name="yields" rows="2" placeholder="Tritanium: 1000&#10;Pyerite: 25" required></textarea><small>Una línea por mineral: Nombre: cantidad</small></label>
@@ -148,12 +157,44 @@
             <button class="primary-button" type="submit">Registrar</button>
           </div>
         </form>
+        <div class="ore-catalog">
+          <div class="ore-catalog-heading">
+            <div><p class="eyebrow">CATÁLOGO DE MENAS</p><strong>¿Qué menas tienes disponibles?</strong></div>
+            <span id="ore-catalog-count" class="catalog-status">0 menas</span>
+          </div>
+          <div class="ore-catalog-filters">
+            <label class="field-label" for="ore-security-filter">Seguridad
+              <select id="ore-security-filter">
+                <option value="all">Todas las ubicaciones</option>
+                <option value="high">Alta (0,8–1,0)</option>
+                <option value="medium">Media (0,5–0,7)</option>
+                <option value="low">Baja (0,1–0,4)</option>
+                <option value="null">Nula (0,0 o menos)</option>
+                <option value="unclassified">Sin clasificar</option>
+              </select>
+            </label>
+            <label class="field-label" for="ore-search">Buscar mena
+              <input id="ore-search" type="search" autocomplete="off" placeholder="Nombre de la mena…">
+            </label>
+          </div>
+          <div class="ore-catalog-actions">
+            <button id="select-visible-ores" type="button" class="text-button">Seleccionar visibles</button>
+            <button id="clear-selected-ores" type="button" class="text-button">Quitar selección visible</button>
+          </div>
+          <div id="ore-catalog-list" class="ore-catalog-list" role="group" aria-label="Menas disponibles"></div>
+          <p id="empty-ore-catalog" class="empty-table" hidden>No hay menas que coincidan con el filtro.</p>
+          <p class="ore-security-note">“Media” representa sistemas de seguridad 0,5–0,7 dentro de high-sec; el juego no la define como una zona independiente. La disponibilidad se basa en los cambios oficiales para cinturones de asteroides; las ubicaciones especiales sin una clasificación fiable aparecen como “Sin clasificar”.</p>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>MENA</th><th>REQUERIDA</th><th>MINADA</th><th>PENDIENTE</th></tr></thead>
+            <thead><tr><th>MENA</th><th>MINERAL OBJETIVO</th><th>REQUERIDA</th><th>MINADA</th><th>PENDIENTE</th></tr></thead>
             <tbody id="ore-recommendation"></tbody>
           </table>
-          <div id="empty-ore-recommendation" class="empty-table">Activa un proyecto con minerales pendientes para calcular las menas necesarias.</div>
+          <div id="empty-ore-recommendation" class="empty-table">Selecciona las menas que tienes disponibles para calcular el seguimiento.</div>
+        </div>
+        <div class="collection-footer ore-collection-footer">
+          <span id="ore-cycle-status">La mena minada se mantiene separada de los minerales reprocesados.</span>
+          <button id="finish-ore-processing" type="button" class="text-button" disabled>Finalizar reprocesado de la mena registrada</button>
         </div>
         <div id="ore-list" class="ore-list"></div>
       </section>

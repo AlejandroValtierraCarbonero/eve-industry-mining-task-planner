@@ -7,6 +7,17 @@ import zipfile
 from pathlib import Path
 
 
+STANDARD_BELT_ORES = {
+    "Arkonor", "Bistot", "Crokite", "Dark Ochre", "Gneiss", "Hedbergite",
+    "Hemorphite", "Jaspet", "Kernite", "Mercoxit", "Omber", "Plagioclase",
+    "Pyroxeres", "Scordite", "Spodumain", "Veldspar"
+}
+FACTION_BULWARK_ORES = {"Kangite", "Moissanite", "Polycrase", "Raspite"}
+SOV_NULLSEC_ORES = {
+    "Griemeer", "Hezorime", "Kylixium", "Mordunium", "Nocxite", "Ueganite"
+}
+
+
 def jsonl_rows(stream):
     for line in stream:
         if line.strip():
@@ -24,6 +35,26 @@ def localized_name(type_record):
     return spanish, english
 
 
+def ore_security_zones(group_name):
+    if group_name in STANDARD_BELT_ORES:
+        zones = []
+        if group_name not in {"Omber", "Kernite"}:
+            zones.extend(("high", "medium"))
+        if group_name not in {"Veldspar", "Scordite", "Plagioclase"}:
+            zones.append("low")
+        if group_name not in {
+            "Scordite", "Plagioclase", "Omber", "Jaspet", "Hemorphite",
+            "Hedbergite", "Gneiss", "Dark Ochre", "Crokite"
+        }:
+            zones.append("null")
+        return zones
+    if group_name in FACTION_BULWARK_ORES:
+        return ["high", "medium"]
+    if group_name in SOV_NULLSEC_ORES:
+        return ["null"]
+    return ["unclassified"]
+
+
 def build_ore_catalog(archive_path):
     with zipfile.ZipFile(archive_path) as archive:
         asteroid_category_ids = {
@@ -31,11 +62,12 @@ def build_ore_catalog(archive_path):
             for row in jsonl_rows(archive.open("categories.jsonl"))
             if localized_name(row)[1] == "Asteroid"
         }
-        asteroid_group_ids = {
-            row["_key"]
+        asteroid_groups = {
+            row["_key"]: localized_name(row)[1]
             for row in jsonl_rows(archive.open("groups.jsonl"))
             if row.get("categoryID") in asteroid_category_ids
         }
+        asteroid_group_ids = set(asteroid_groups)
         compressed_type_ids = {
             row["compressedTypeID"]
             for row in jsonl_rows(archive.open("compressibleTypes.jsonl"))
@@ -67,6 +99,9 @@ def build_ore_catalog(archive_path):
                     "typeId": type_id,
                     "name": name,
                     "englishName": english_name,
+                    "securityZones": ore_security_zones(
+                        asteroid_groups.get(record.get("groupID"))
+                    ),
                     "volume": record["volume"],
                     "portionSize": record["portionSize"]
                 }

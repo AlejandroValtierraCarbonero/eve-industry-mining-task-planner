@@ -76,7 +76,12 @@ Muestra la lista consolidada de minería:
 
 - Volumen total a extraer expresado en m3 y en número de cargamentos (según la capacidad del Hold de la nave minera, ej. Orca/Rorqual/Barge).
 - Cantidad de unidades de mena sin procesar necesarias, calculada a partir del tamaño de lote y el rendimiento oficial de reprocesamiento para cubrir el mineral pendiente más crítico.
-- Indicar el rendimiento mineral estimado, el volumen y los viajes de carga; la recomendación es orientativa y no optimiza todos los coproductos a la vez.
+- Catálogo completo de menas con filtro por seguridad y selección persistente de las menas disponibles.
+- Mostrar por separado el requisito individual de cada mena seleccionada, sin sumar las alternativas.
+- Al registrar mena cruda minada, descontar sus rendimientos estimados y coproductos de los déficits pendientes, actualizando las alternativas seleccionadas.
+- Mantener separado el registro de mena y el de minerales reprocesados. Al terminar el reprocesado, el usuario registra los minerales reales en el módulo de recolección y finaliza el ciclo de mena para evitar duplicar rendimientos estimados.
+- Clasificar los cinturones de asteroides según la [distribución oficial de recursos de CCP](https://www.eveonline.com/news/view/resource-distribution-update). “Media” representa sistemas 0,5–0,7 dentro de high-sec, pues el juego no define una zona de seguridad independiente con ese nombre. Los depósitos de mena de soberanía se clasifican como null-sec según las [notas oficiales de Equinox](https://www.eveonline.com/news/view/equinox-expansion-notes); las ubicaciones especiales sin clasificación fiable se muestran como “Sin clasificar”.
+- Indicar el rendimiento mineral estimado, el volumen y los viajes de carga; la recomendación es orientativa y no optimiza todos los coproductos a la vez ni determina la disponibilidad exacta por sistema, anomalía o luna.
 
 ### Módulo D: Panel de control de recolección (Tracking & Progress Bar)
 

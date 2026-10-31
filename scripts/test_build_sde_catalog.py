@@ -4,7 +4,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from build_sde_catalog import build_catalog, build_ore_catalog
+from build_sde_catalog import build_catalog, build_ore_catalog, ore_security_zones
 
 
 class BuildSdeCatalogTests(unittest.TestCase):
@@ -123,6 +123,19 @@ class BuildSdeCatalogTests(unittest.TestCase):
         self.assertEqual(catalog[0]["volume"], 0.1)
         self.assertEqual(catalog[0]["batchVolume"], 10)
         self.assertEqual(catalog[0]["yields"], {"Tritanium": 400, "Pyerite": 10})
+        self.assertEqual(catalog[0]["securityZones"], ["high", "medium", "null"])
+
+    def test_assigns_belt_ore_security_from_official_distribution_rules(self):
+        self.assertEqual(ore_security_zones("Veldspar"), ["high", "medium", "null"])
+        self.assertEqual(ore_security_zones("Kernite"), ["low", "null"])
+        self.assertEqual(ore_security_zones("Hemorphite"), ["high", "medium", "low"])
+        self.assertEqual(ore_security_zones("Arkonor"), ["high", "medium", "low", "null"])
+        self.assertEqual(ore_security_zones("Kangite"), ["high", "medium"])
+        self.assertEqual(ore_security_zones("Mordunium"), ["null"])
+        self.assertEqual(ore_security_zones("Ytirium"), ["unclassified"])
+        self.assertEqual(ore_security_zones("Common Moon Asteroids"), ["unclassified"])
+        self.assertEqual(ore_security_zones("Ice"), ["unclassified"])
+        self.assertEqual(ore_security_zones("Unknown deposit"), ["unclassified"])
 
 
 if __name__ == "__main__":
