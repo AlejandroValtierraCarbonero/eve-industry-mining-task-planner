@@ -52,10 +52,11 @@ jobs:
               "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-${{ steps.sde-version.outputs.build }}-jsonl.zip" \
               -o .cache/sde/sde.zip
           fi
-      - name: Run application and catalog tests
+      - name: Run testing application and catalog tests
         run: |
           cd testing
           node --test planner.test.js
+          python -m unittest discover -s scripts -p 'test_*.py'
           cd ../production
           python -m unittest discover -s scripts -p 'test_*.py'
       - name: Prepare static site
@@ -64,7 +65,7 @@ jobs:
           cp production/index.html production/styles.css production/app.js production/planner.js dist/
           cp testing/index.html testing/styles.css testing/app.js testing/planner.js dist/testing/
           sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${GITHUB_SHA}\"|; s|src=\"planner.js\"|src=\"planner.js?v=${GITHUB_SHA}\"|; s|src=\"app.js\"|src=\"app.js?v=${GITHUB_SHA}\"|" dist/index.html dist/testing/index.html
-          python production/scripts/build_sde_catalog.py \
+          python testing/scripts/build_sde_catalog.py \
             --archive .cache/sde/sde.zip \
             --output dist/testing/sde-blueprints.json \
             --build-number "${{ steps.sde-version.outputs.build }}"
