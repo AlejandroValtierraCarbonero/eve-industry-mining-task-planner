@@ -164,6 +164,7 @@ td:last-child { color: var(--gold); }
 .settings-panel[open] .chevron { transform: rotate(180deg); }
 .settings-content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--border); margin-top: 17px; padding-top: 17px; }
 .settings-content p { grid-column: 1 / -1; color: var(--muted); font-size: 10px; line-height: 1.6; margin: 0; }
+.settings-content small { color: var(--muted); font-size: 9px; line-height: 1.5; }
 .settings-content input { margin-top: 1px; }
 .notice { position: sticky; top: 10px; z-index: 3; background: #183833; border: 1px solid #397166; color: #d6fff5; padding: 10px 13px; border-radius: 4px; font-size: 11px; margin-bottom: 14px; }
 .notice.error { background: #3a2423; border-color: #76433f; color: #ffdbd6; }

@@ -30,11 +30,13 @@
       .map((item) => item.blueprint);
   }
 
-  function getBlueprintPlan(blueprint, requestedQuantity) {
+  function getBlueprintPlan(blueprint, requestedQuantity, materialEfficiency = 0) {
     const quantity = Math.ceil(Number(requestedQuantity));
     const outputQuantity = Number(blueprint?.outputQuantity);
+    const efficiency = Number(materialEfficiency);
     if (!Number.isFinite(quantity) || quantity <= 0 ||
       !Number.isFinite(outputQuantity) || outputQuantity <= 0 ||
+      !Number.isFinite(efficiency) || efficiency < 0 || efficiency > 10 ||
       !Array.isArray(blueprint?.materials) || !blueprint.materials.length) {
       throw new RangeError("Blueprint and requested product quantity must be valid.");
     }
@@ -43,10 +45,15 @@
       runs,
       requestedQuantity: quantity,
       producedQuantity: runs * outputQuantity,
-      materials: blueprint.materials.map((material) => ({
-        ...material,
-        requiredQuantity: Number(material.quantity) * runs
-      }))
+      materialEfficiency: efficiency,
+      materials: blueprint.materials.map((material) => {
+        const baseRequiredQuantity = Number(material.quantity) * runs;
+        return {
+          ...material,
+          baseRequiredQuantity,
+          requiredQuantity: Math.ceil(baseRequiredQuantity * (1 - efficiency / 100))
+        };
+      })
     };
   }
 

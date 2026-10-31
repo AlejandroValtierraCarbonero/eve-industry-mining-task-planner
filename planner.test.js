@@ -69,3 +69,18 @@ test("calcula los materiales por número de lotes y redondea hacia arriba", () =
   assert.deepEqual(plan.materials.map((item) => item.requiredQuantity), [200, 50]);
   assert.throws(() => planner.getBlueprintPlan({ outputQuantity: 0, materials: [] }, 1), RangeError);
 });
+
+test("aplica ME al total del trabajo y redondea hacia arriba por material", () => {
+  const plan = planner.getBlueprintPlan({
+    outputQuantity: 1,
+    materials: [{ name: "Tritanio", quantity: 4 }]
+  }, 3, 10);
+  assert.equal(plan.runs, 3);
+  assert.equal(plan.materialEfficiency, 10);
+  assert.equal(plan.materials[0].baseRequiredQuantity, 12);
+  assert.equal(plan.materials[0].requiredQuantity, 11);
+  assert.throws(() => planner.getBlueprintPlan({
+    outputQuantity: 1,
+    materials: [{ name: "Tritanio", quantity: 4 }]
+  }, 1, 10.1), RangeError);
+});

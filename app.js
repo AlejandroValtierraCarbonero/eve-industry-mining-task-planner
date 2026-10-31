@@ -12,7 +12,12 @@
     projects: [],
     ores: [],
     collected: {},
-    settings: { efficiency: 100, holdCapacity: 100000, mineralVolume: 0.01 }
+    settings: {
+      efficiency: 100,
+      materialEfficiency: 0,
+      holdCapacity: 100000,
+      mineralVolume: 0.01
+    }
   });
   let state = defaultState();
   let noticeTimer;
@@ -42,6 +47,7 @@
       if (!stored) return defaultState();
       const parsed = JSON.parse(stored);
       const efficiency = Number(parsed.settings?.efficiency);
+      const materialEfficiency = Number(parsed.settings?.materialEfficiency);
       const holdCapacity = Number(parsed.settings?.holdCapacity);
       const mineralVolume = Number(parsed.settings?.mineralVolume);
       return {
@@ -50,6 +56,9 @@
         collected: parsed.collected && typeof parsed.collected === "object" ? parsed.collected : {},
         settings: {
           efficiency: clamp(Number.isFinite(efficiency) ? efficiency : 100, 0, 100),
+          materialEfficiency: clamp(
+            Number.isFinite(materialEfficiency) ? materialEfficiency : 0, 0, 10
+          ),
           holdCapacity: Number.isFinite(holdCapacity) && holdCapacity > 0 ? holdCapacity : 100000,
           mineralVolume: Number.isFinite(mineralVolume) && mineralVolume > 0 ? mineralVolume : 0.01
         }
@@ -137,6 +146,18 @@
       renderBlueprintSelection();
     });
     $("#blueprint-quantity").addEventListener("input", renderBlueprintSelection);
+    $("#material-efficiency").addEventListener("change", (event) => {
+      const value = Number(event.target.value);
+      if (!Number.isFinite(value) || value < 0 || value > 10) {
+        event.target.value = state.settings.materialEfficiency;
+        showNotice("La eficiencia de materiales debe estar entre 0 y 10 %.", true);
+        return;
+      }
+      state.settings.materialEfficiency = value;
+      saveState();
+      render();
+      renderBlueprintSelection();
+    });
     $("#clear-blueprint").addEventListener("click", () => {
       selectedBlueprint = null;
       searchInput.value = "";
@@ -204,7 +225,9 @@
     const requestedQuantity = Number($("#blueprint-quantity").value);
     let plan;
     try {
-      plan = window.EvePlanner.getBlueprintPlan(selectedBlueprint, requestedQuantity);
+      plan = window.EvePlanner.getBlueprintPlan(
+        selectedBlueprint, requestedQuantity, state.settings.materialEfficiency
+      );
     } catch {
       $("#blueprint-plan-summary").textContent = "Introduce una cantidad válida.";
       $("#blueprint-material-preview").replaceChildren();
@@ -215,9 +238,10 @@
     $("#selected-blueprint-english").textContent =
       selectedBlueprint.englishName !== selectedBlueprint.name ? selectedBlueprint.englishName : "";
     $("#blueprint-plan-summary").textContent =
-      `${formatNumber(plan.runs)} ${plan.runs === 1 ? "lote" : "lotes"} · se producirán ${formatNumber(plan.producedQuantity)} unidades. Requisitos base SDE, antes de la eficiencia de material (ME) y bonificaciones de estructura.`;
+      `${formatNumber(plan.runs)} ${plan.runs === 1 ? "lote" : "lotes"} · ${formatNumber(plan.producedQuantity)} unidades · ME ${formatNumber(plan.materialEfficiency)} %. Se redondea hacia arriba el total de cada material.`;
     $("#blueprint-material-preview").innerHTML = plan.materials.map((material) =>
-      `<li>${escapeHtml(material.name)} <span>${formatNumber(material.requiredQuantity)}</span></li>`
+      `<li>${escapeHtml(material.name)} <span>${formatNumber(material.requiredQuantity)}${plan.materialEfficiency > 0
+        ? ` <small>(base ${formatNumber(material.baseRequiredQuantity)})</small>` : ""}</span></li>`
     ).join("");
     $("#blueprint-selection").hidden = false;
   }
@@ -226,7 +250,9 @@
     if (!selectedBlueprint) return;
     try {
       const plan = window.EvePlanner.getBlueprintPlan(
-        selectedBlueprint, Number($("#blueprint-quantity").value)
+        selectedBlueprint,
+        Number($("#blueprint-quantity").value),
+        state.settings.materialEfficiency
       );
       $("#project-name").value = `${formatNumber(plan.requestedQuantity)} × ${selectedBlueprint.name}`;
       ids.projectRows.replaceChildren();
@@ -563,6 +589,7 @@
     renderCollection(requirements, allocations);
     renderOres();
     $("#efficiency").value = state.settings.efficiency;
+    $("#material-efficiency").value = state.settings.materialEfficiency;
     $("#hold-capacity").value = state.settings.holdCapacity;
     $("#mineral-volume").value = state.settings.mineralVolume;
   }
