@@ -65,6 +65,10 @@ jobs:
           cp production/index.html production/styles.css production/app.js production/planner.js dist/
           cp testing/index.html testing/styles.css testing/app.js testing/planner.js dist/testing/
           sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${GITHUB_SHA}\"|; s|src=\"planner.js\"|src=\"planner.js?v=${GITHUB_SHA}\"|; s|src=\"app.js\"|src=\"app.js?v=${GITHUB_SHA}\"|" dist/index.html dist/testing/index.html
+          python production/scripts/build_sde_catalog.py \
+            --archive .cache/sde/sde.zip \
+            --output dist/sde-blueprints.json \
+            --build-number "${{ steps.sde-version.outputs.build }}"
           python testing/scripts/build_sde_catalog.py \
             --archive .cache/sde/sde.zip \
             --output dist/testing/sde-blueprints.json \
