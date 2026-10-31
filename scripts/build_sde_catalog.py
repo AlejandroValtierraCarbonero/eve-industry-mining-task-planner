@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a compact blueprint search catalog from CCP's official SDE JSONL zip."""
+"""Build compact blueprint and asteroid-ore catalogs from CCP's official SDE."""
 
 import argparse
 import json
@@ -22,6 +22,82 @@ def localized_name(type_record):
     english = names.get("en")
     spanish = names.get("es") or english
     return spanish, english
+
+
+def build_ore_catalog(archive_path):
+    with zipfile.ZipFile(archive_path) as archive:
+        asteroid_category_ids = {
+            row["_key"]
+            for row in jsonl_rows(archive.open("categories.jsonl"))
+            if localized_name(row)[1] == "Asteroid"
+        }
+        asteroid_group_ids = {
+            row["_key"]
+            for row in jsonl_rows(archive.open("groups.jsonl"))
+            if row.get("categoryID") in asteroid_category_ids
+        }
+        compressed_type_ids = {
+            row["compressedTypeID"]
+            for row in jsonl_rows(archive.open("compressibleTypes.jsonl"))
+            if row.get("compressedTypeID") is not None
+        }
+
+        mineral_names = {
+            "Tritanium", "Pyerite", "Mexallon", "Isogen",
+            "Nocxium", "Zydrine", "Megacyte", "Morphite"
+        }
+        ores = {}
+        minerals = {}
+        for record in jsonl_rows(archive.open("types.jsonl")):
+            type_id = record.get("_key")
+            name, english_name = localized_name(record)
+            if not name or not english_name:
+                continue
+            if english_name in mineral_names:
+                minerals[type_id] = (name, english_name)
+            if (
+                record.get("published")
+                and record.get("groupID") in asteroid_group_ids
+                and type_id not in compressed_type_ids
+                and "compressed" not in english_name.casefold()
+                and numeric_value(record.get("volume")) > 0
+                and numeric_value(record.get("portionSize")) > 0
+            ):
+                ores[type_id] = {
+                    "typeId": type_id,
+                    "name": name,
+                    "englishName": english_name,
+                    "volume": record["volume"],
+                    "portionSize": record["portionSize"]
+                }
+
+        for record in jsonl_rows(archive.open("typeMaterials.jsonl")):
+            ore = ores.get(record.get("_key"))
+            if not ore:
+                continue
+            yields = {}
+            for material in record.get("materials", []):
+                mineral = minerals.get(material.get("materialTypeID"))
+                quantity = material.get("quantity")
+                if mineral and isinstance(quantity, (int, float)) and quantity > 0:
+                    yields[mineral[1]] = quantity
+            if not yields:
+                continue
+            ore["yields"] = yields
+            ore["batchVolume"] = ore["volume"] * ore["portionSize"]
+
+    return sorted(
+        (ore for ore in ores.values() if "yields" in ore),
+        key=lambda ore: (ore["name"].casefold(), ore["typeId"])
+    )
+
+
+def numeric_value(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0
+    return number
 
 
 def build_catalog(archive_path):
@@ -103,17 +179,21 @@ def main():
     args = parser.parse_args()
 
     catalog = build_catalog(args.archive)
-    if not catalog:
-        raise SystemExit("The SDE archive produced an empty blueprint catalog.")
+    ores = build_ore_catalog(args.archive)
+    if not catalog or not ores:
+        raise SystemExit("The SDE archive produced an empty blueprint or asteroid-ore catalog.")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8", newline="\n") as output:
         json.dump(
-            {"buildNumber": args.build_number, "blueprints": catalog},
+            {"buildNumber": args.build_number, "blueprints": catalog, "ores": ores},
             output,
             ensure_ascii=False,
             separators=(",", ":")
         )
-    print(f"Built {len(catalog)} blueprint products from SDE build {args.build_number}.")
+    print(
+        f"Built {len(catalog)} blueprint products and {len(ores)} asteroid ores "
+        f"from SDE build {args.build_number}."
+    )
 
 
 if __name__ == "__main__":

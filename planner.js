@@ -146,14 +146,16 @@
     const critical = deficits[0];
     return ores.map((ore) => {
       const output = Math.max(0, Number(ore.yields?.[critical.mineral]) || 0) * efficiency / 100;
-      if (!output || !Number(ore.volume) || ore.volume <= 0) return null;
+      const batchVolume = Number(ore.batchVolume) || Number(ore.volume);
+      if (!output || !batchVolume || batchVolume <= 0) return null;
       const batches = Math.ceil(critical.amount / output);
-      const volume = batches * ore.volume;
+      const volume = batches * batchVolume;
       return {
         ...ore,
         mineral: critical.mineral,
         deficit: critical.amount,
         outputPerBatch: output,
+        batchVolume,
         batches,
         estimatedOutput: batches * output,
         volume,

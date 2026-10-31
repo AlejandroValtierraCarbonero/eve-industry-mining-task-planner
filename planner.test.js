@@ -44,6 +44,22 @@ test("recomienda perfiles por volumen según eficiencia y déficit crítico", ()
   assert.equal(recommendations[0].volume, 10);
 });
 
+test("recomienda menas del SDE usando el volumen total de su lote", () => {
+  const recommendations = planner.recommendOres(
+    { Tritanium: 401 },
+    {},
+    [
+      { name: "Veldspar SDE", portionSize: 100, volume: 0.1, batchVolume: 10, yields: { Tritanium: 400 } },
+      { name: "Pyerita ore", portionSize: 100, volume: 0.3, batchVolume: 30, yields: { Pyerite: 400 } }
+    ],
+    100
+  );
+  assert.equal(recommendations.length, 1);
+  assert.equal(recommendations[0].batches, 2);
+  assert.equal(recommendations[0].batchVolume, 10);
+  assert.equal(recommendations[0].volume, 20);
+});
+
 test("busca blueprints sin distinguir mayúsculas ni acentos y limita resultados", () => {
   const catalog = [
     { name: "La Drake", englishName: "Drake" },

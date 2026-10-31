@@ -21,6 +21,7 @@
   let state = defaultState();
   let noticeTimer;
   let blueprintCatalog = [];
+  let sdeOres = [];
   let selectedBlueprint = null;
   let projectBlueprintDraft = null;
   let searchTimer;
@@ -195,13 +196,15 @@
   async function loadBlueprintCatalog() {
     const status = $("#sde-catalog-status");
     try {
-      const response = await fetch("sde-blueprints.json");
+      const response = await fetch("sde-blueprints.json", { cache: "no-cache" });
       if (!response.ok) throw new Error(`SDE catalog request failed (${response.status}).`);
       const catalog = await response.json();
-      if (!catalog || !Array.isArray(catalog.blueprints) || !catalog.blueprints.length) {
-        throw new Error("SDE catalog contains no blueprint products.");
+      if (!catalog || !Array.isArray(catalog.blueprints) || !catalog.blueprints.length ||
+        !Array.isArray(catalog.ores) || !catalog.ores.length) {
+        throw new Error("SDE catalog contains no blueprint products or asteroid ores.");
       }
       blueprintCatalog = catalog.blueprints;
+      sdeOres = catalog.ores;
       for (const blueprint of blueprintCatalog) {
         for (const material of blueprint.materials) {
           if (material.name && material.englishName) {
@@ -212,7 +215,7 @@
           }
         }
       }
-      status.textContent = `${formatNumber(blueprintCatalog.length)} productos · SDE ${catalog.buildNumber}`;
+      status.textContent = `${formatNumber(blueprintCatalog.length)} productos · ${formatNumber(sdeOres.length)} menas · SDE ${catalog.buildNumber}`;
       status.title = "Catálogo derivado del EVE Online Static Data Export oficial.";
       $("#blueprint-search").disabled = false;
       render();
@@ -637,17 +640,27 @@
         mineralCollected[mineral] = (mineralCollected[mineral] || 0) + amount;
       }
     }
+    const oreCatalog = [
+      ...sdeOres.map((ore) => ({ ...ore, source: "SDE oficial" })),
+      ...state.ores.map((ore) => ({ ...ore, source: "Personalizada" }))
+    ];
     const suggestions = window.EvePlanner.recommendOres(
-      mineralRequirements, mineralCollected, state.ores, state.settings.efficiency
+      mineralRequirements, mineralCollected, oreCatalog, state.settings.efficiency
     );
     ids.recommendation.innerHTML = suggestions.slice(0, 3).map((ore) => {
       const trips = Math.ceil(ore.volume / state.settings.holdCapacity);
-      return `<article class="recommendation-card"><strong>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</strong>
+      return `<article class="recommendation-card"><strong>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</strong><small class="ore-source">${escapeHtml(ore.source)}</small>
         <p>Prioridad: <span>${escapeHtml(ore.mineral)}</span> · Déficit ${formatNumber(ore.deficit)}</p>
         <p>${formatNumber(ore.batches)} lotes · ~${formatNumber(ore.volume)} m³ · ${trips} ${trips === 1 ? "viaje" : "viajes"}</p>
         <p>Rendimiento estimado: ${formatNumber(ore.estimatedOutput)} ${escapeHtml(ore.mineral)}</p></article>`;
     }).join("");
-    $("#empty-ores").hidden = state.ores.length > 0;
+    const emptyMessage = $("#empty-ores");
+    emptyMessage.hidden = suggestions.length > 0;
+    emptyMessage.querySelector("p").textContent = !Object.keys(mineralRequirements).length
+      ? "Activa un proyecto con minerales pendientes para generar recomendaciones."
+      : !state.settings.efficiency
+        ? "Configura una eficiencia de reprocesamiento mayor que 0 % para estimar rendimientos."
+        : "No hay datos de menas que produzcan el mineral prioritario.";
     ids.oreList.innerHTML = state.ores.map((ore) =>
       `<div class="ore-chip"><span>${escapeHtml(ore.name)}${ore.system ? ` · ${escapeHtml(ore.system)}` : ""}</span><small>${formatNumber(ore.volume)} m³/lote</small><button type="button" data-id="${escapeHtml(ore.id)}" aria-label="Eliminar perfil de ${escapeHtml(ore.name)}">×</button></div>`
     ).join("");

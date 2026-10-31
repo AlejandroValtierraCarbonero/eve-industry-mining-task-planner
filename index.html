@@ -127,7 +127,7 @@
           <div><p class="eyebrow">PLANIFICACIÓN DE MINERÍA</p><h2>Recomendación de menas</h2></div>
           <button id="add-ore-toggle" class="secondary-button" type="button">Configurar una mena <span aria-hidden="true">＋</span></button>
         </div>
-        <p class="section-copy">La sugerencia prioriza el mineral pendiente más crítico y recomienda los perfiles que cubren ese déficit con menor volumen minado. Es una heurística, no un optimizador lineal.</p>
+        <p class="section-copy">La recomendación usa las composiciones y los volúmenes por lote del catálogo oficial SDE, ajustados por tu eficiencia de reprocesamiento. Prioriza el mineral pendiente más crítico y estima qué mena requiere menos volumen; no considera dónde está disponible ni reemplaza un optimizador completo.</p>
         <form id="ore-form" class="entry-form ore-form" hidden>
           <div class="form-row">
             <label class="field-label">Nombre de la mena<input name="name" maxlength="80" placeholder="Ej. Veldspar" required></label>
@@ -140,7 +140,7 @@
           <div class="form-actions"><button class="primary-button" type="submit">Guardar perfil de mena</button><button id="cancel-ore" class="text-button" type="button">Cancelar</button></div>
         </form>
         <div id="ore-recommendation" class="recommendation-list"></div>
-        <div id="empty-ores" class="empty-state compact"><p>Añade perfiles de reprocesamiento para obtener recomendaciones de minería. Los rendimientos dependen de tu configuración; no se incluyen valores inventados.</p></div>
+        <div id="empty-ores" class="empty-state compact"><p>Activa un proyecto con minerales pendientes para generar recomendaciones.</p></div>
         <div id="ore-list" class="ore-list"></div>
       </section>
 

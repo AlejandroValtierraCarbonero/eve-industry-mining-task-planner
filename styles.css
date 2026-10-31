@@ -152,7 +152,8 @@ td:last-child { color: var(--gold); }
 .form-actions { display: flex; gap: 13px; align-items: center; margin-top: 15px; }
 .recommendation-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 17px; }
 .recommendation-card { border: 1px solid #36554f; border-radius: 5px; padding: 13px; background: #15241f; }
-.recommendation-card strong { display: block; color: var(--accent); font: 500 13px "Space Grotesk", sans-serif; margin-bottom: 8px; }
+.recommendation-card strong { display: block; color: var(--accent); font: 500 13px "Space Grotesk", sans-serif; margin-bottom: 2px; }
+.recommendation-card .ore-source { display: inline-block; margin-bottom: 7px; color: var(--muted); font-size: 9px; }
 .recommendation-card p { color: #b7c5c6; font-size: 10px; margin: 5px 0; }
 .recommendation-card span { color: var(--gold); }
 .ore-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
